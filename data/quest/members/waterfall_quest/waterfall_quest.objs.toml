@@ -1,0 +1,55 @@
+[almeras_bookcase]
+id = 2877
+examine = "I wonder what books are in here?"
+
+[glarials_tombstone]
+id = 2862
+examine = "A tombstone dedicated to Glarial, wife of Baxtorian."
+
+[glarials_coffin]
+id = 2861
+examine = "The ornate coffin of Glarial."
+
+[glarials_tomb_crate]
+id = 2857
+examine = "A crate."
+
+[glarials_tomb_bookcase]
+id = 2855
+examine = "A bookcase in the tomb."
+
+[baxtorian_falls_dead_tree]
+id = 2860
+examine = "A dead tree overhanging the waterfall."
+
+[waterfall_dungeon_door]
+id = 2892
+examine = "A stone door engraved with elvish runes."
+
+[baxtorian_pedestal_air]
+id = 2886
+examine = "A stone pedestal engraved with an air symbol."
+
+[baxtorian_pedestal_mind]
+id = 2887
+examine = "A stone pedestal engraved with a mind symbol."
+
+[baxtorian_pedestal_water]
+id = 2888
+examine = "A stone pedestal engraved with a water symbol."
+
+[baxtorian_pedestal_earth]
+id = 2889
+examine = "A stone pedestal engraved with an earth symbol."
+
+[baxtorian_pedestal_fire]
+id = 2890
+examine = "A stone pedestal engraved with a fire symbol."
+
+[baxtorian_pedestal_body]
+id = 2891
+examine = "A stone pedestal engraved with a body symbol."
+
+[baxtorian_altar]
+id = 2864
+examine = "The altar of Baxtorian."

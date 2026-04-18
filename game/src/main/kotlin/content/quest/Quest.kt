@@ -23,6 +23,7 @@ val quests = setOf(
     "plague_city",
     "lost_city",
     "tears_of_guthix",
+    "waterfall_quest",
     // mini-quests
     "enter_the_abyss",
 )
