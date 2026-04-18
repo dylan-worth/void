@@ -64,8 +64,8 @@ class WaterfallQuest : Script {
                         list.add("<navy>I have <maroon>Glarial's Amulet<navy>, <maroon>Glarial's Urn")
                         list.add("<navy>and <maroon>a Key<navy>. I should use a <maroon>rope <navy>on the")
                         list.add("<maroon>dead tree <navy>near the waterfall to enter the dungeon.")
-                        list.add("<navy>Inside, I need 6 of each rune type on 6 pedestals:")
-                        list.add("<maroon>Air<navy>, <maroon>Mind<navy>, <maroon>Water<navy>, <maroon>Earth<navy>, <maroon>Fire<navy>, <maroon>Body<navy>.")
+                        list.add("<navy>Inside, I need 6 of each rune on 3 pedestals:")
+                        list.add("<maroon>Air<navy>, <maroon>Earth <navy>and <maroon>Water<navy>.")
                         list.add("<navy>Then use <maroon>Glarial's Urn <navy>on the <maroon>Altar of Baxtorian<navy>.")
                     }
                     list
@@ -331,11 +331,8 @@ class WaterfallQuest : Script {
     companion object {
         val RUNE_PEDESTALS = mapOf(
             "air_rune" to "baxtorian_pedestal_air",
-            "mind_rune" to "baxtorian_pedestal_mind",
-            "water_rune" to "baxtorian_pedestal_water",
             "earth_rune" to "baxtorian_pedestal_earth",
-            "fire_rune" to "baxtorian_pedestal_fire",
-            "body_rune" to "baxtorian_pedestal_body",
+            "water_rune" to "baxtorian_pedestal_water",
         )
     }
 }

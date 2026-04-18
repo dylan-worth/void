@@ -30,25 +30,13 @@ examine = "A stone door engraved with elvish runes."
 id = 2886
 examine = "A stone pedestal engraved with an air symbol."
 
-[baxtorian_pedestal_mind]
+[baxtorian_pedestal_earth]
 id = 2887
-examine = "A stone pedestal engraved with a mind symbol."
+examine = "A stone pedestal engraved with an earth symbol."
 
 [baxtorian_pedestal_water]
 id = 2888
 examine = "A stone pedestal engraved with a water symbol."
-
-[baxtorian_pedestal_earth]
-id = 2889
-examine = "A stone pedestal engraved with an earth symbol."
-
-[baxtorian_pedestal_fire]
-id = 2890
-examine = "A stone pedestal engraved with a fire symbol."
-
-[baxtorian_pedestal_body]
-id = 2891
-examine = "A stone pedestal engraved with a body symbol."
 
 [baxtorian_altar]
 id = 2864
