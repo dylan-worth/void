@@ -1,10 +1,6 @@
 package content.quest.member.waterfall_quest
 
-import content.entity.player.dialogue.Happy
-import content.entity.player.dialogue.Idle
 import content.entity.player.dialogue.type.item
-import content.entity.player.dialogue.type.npc
-import content.entity.player.dialogue.type.player
 import content.entity.player.dialogue.type.statement
 import content.entity.player.inv.item.addOrDrop
 import content.quest.letterScroll
@@ -14,6 +10,8 @@ import content.quest.questJournal
 import content.quest.refreshQuestJournal
 import world.gregs.voidps.engine.Script
 import world.gregs.voidps.engine.client.message
+import world.gregs.voidps.engine.client.ui.dialogue.talkWith
+import world.gregs.voidps.engine.entity.character.npc.NPCs
 import world.gregs.voidps.engine.entity.character.jingle
 import world.gregs.voidps.engine.entity.character.move.tele
 import world.gregs.voidps.engine.entity.character.player.Player
@@ -123,13 +121,8 @@ class WaterfallQuest : Script {
             delay(2)
             tele(2512, 3480, 0)
             if (stage == "started" && !get("waterfall_quest_hudon_found", false)) {
-                npc<Happy>("Hey! Did my mum send you?")
-                player<Idle>("She's worried about you.")
-                npc<Happy>("Ha! I'm perfectly fine. Tell her I'll be back before dark.")
-                player<Idle>("I'll let her know you're safe.")
-                npc<Idle>("Tell her not to fuss. This waterfall is incredible!")
-                set("waterfall_quest_hudon_found", true)
-                refreshQuestJournal()
+                val hudon = NPCs.findOrNull(tile.regionLevel, "hudon_baxtorian_falls") ?: return@objectOperate
+                talkWith(hudon)
             }
         }
 
