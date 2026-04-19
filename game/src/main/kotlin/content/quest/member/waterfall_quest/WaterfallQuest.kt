@@ -121,7 +121,7 @@ class WaterfallQuest : Script {
             }
             message("You climb onto the raft and drift down towards the waterfall.")
             delay(2)
-            tele(2511, 3484, 0)
+            tele(2512, 3480, 0)
             if (stage == "started" && !get("waterfall_quest_hudon_found", false)) {
                 npc<Happy>("Hey! Did my mum send you?")
                 player<Idle>("She's worried about you.")
