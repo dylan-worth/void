@@ -48,8 +48,15 @@ class Almera : Script {
 
     suspend fun Player.remindBookcase() {
         npc<Disheartened>("Have you found Hudon yet?")
-        player<Idle>("I'm looking for him.")
-        npc<Idle>("Please do. And don't forget to search the bookcase in the back room. My husband collected many books about Baxtorian and this valley.")
+        if (!get("waterfall_quest_hudon_found", false)) {
+            player<Idle>("Not yet, I'm looking for him.")
+            npc<Sad>("He went towards the waterfall. There's a raft just down the bank you could use to reach him.")
+        } else {
+            player<Happy>("Yes, he's fine! Just exploring by the waterfall.")
+            npc<Happy>("Oh, thank goodness. Did you find anything useful in the house?")
+            player<Idle>("I'm still searching.")
+            npc<Idle>("Don't forget the bookcase in the back room. My husband collected many books about Baxtorian and this valley.")
+        }
     }
 
     suspend fun Player.foundBook() {
