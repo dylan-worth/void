@@ -1,6 +1,10 @@
 package content.quest.member.waterfall_quest
 
+import content.entity.player.dialogue.Happy
+import content.entity.player.dialogue.Idle
 import content.entity.player.dialogue.type.item
+import content.entity.player.dialogue.type.npc
+import content.entity.player.dialogue.type.player
 import content.entity.player.dialogue.type.statement
 import content.entity.player.inv.item.addOrDrop
 import content.quest.letterScroll
@@ -62,8 +66,8 @@ class WaterfallQuest : Script {
                         if (!hasKey) list.add("<maroon>A Key <navy>from the bookcase.")
                     } else {
                         list.add("<navy>I have <maroon>Glarial's Amulet<navy>, <maroon>Glarial's Urn")
-                        list.add("<navy>and <maroon>a Key<navy>. I can use a <maroon>rope <navy>on the")
-                        list.add("<maroon>dead tree<navy>, or climb into the <maroon>barrel <navy>by the falls.")
+                        list.add("<navy>and <maroon>a Key<navy>. I should swim to the <maroon>rock <navy>or")
+                        list.add("<navy>use a <maroon>rope <navy>and climb the <maroon>dead tree <navy>by the falls.")
                         list.add("<navy>Inside, I need 6 of each rune on 3 pedestals:")
                         list.add("<maroon>Air<navy>, <maroon>Earth <navy>and <maroon>Water<navy>.")
                         list.add("<navy>Then use <maroon>Glarial's Urn <navy>on the <maroon>Altar of Baxtorian<navy>.")
@@ -118,27 +122,23 @@ class WaterfallQuest : Script {
             message("You climb onto the raft and drift down towards the waterfall.")
             delay(2)
             tele(2511, 3484, 0)
+            if (stage == "started" && !get("waterfall_quest_hudon_found", false)) {
+                npc<Happy>("Hey! Did my mum send you?")
+                player<Idle>("She's worried about you.")
+                npc<Happy>("Ha! I'm perfectly fine. Tell her I'll be back before dark.")
+                player<Idle>("I'll let her know you're safe.")
+                npc<Idle>("Tell her not to fuss. This waterfall is incredible!")
+                set("waterfall_quest_hudon_found", true)
+                refreshQuestJournal()
+            }
         }
 
-        // Fall into the waterfall via barrel (alternate dungeon entry)
-        objectOperate("Use", "baxtorian_falls_barrel") {
-            val stage = quest("waterfall_quest")
-            if (stage != "has_pebble" && stage != "completed") {
-                statement("You'd rather not go in the barrel.")
-                return@objectOperate
-            }
-            if (!carriesItem("glarials_amulet")) {
-                statement("An invisible force repels you. You need something from Glarial's Tomb to enter.")
-                return@objectOperate
-            }
-            if (!carriesItem("glarials_urn_empty")) {
-                statement("You feel you're missing something. Glarial's Urn is needed to perform the ritual.")
-                return@objectOperate
-            }
-            message("You climb into the barrel and it's swept over the waterfall!")
+        // Swim to the rock by the waterfall (brings you to the dead tree)
+        objectOperate("Swim-to", "baxtorian_falls_rock") {
+            message("You wade into the water and swim towards the rocky island.")
             delay(2)
-            message("The current pulls you into the waterfall!")
-            tele(2541, 9867, 0)
+            message("You haul yourself up onto the rock.")
+            tele(2512, 3469, 0)
         }
 
         // Almera's bookcase gives Book on Baxtorian and a key
@@ -271,6 +271,27 @@ class WaterfallQuest : Script {
             } else {
                 statement("There is nothing more of use on these shelves.")
             }
+        }
+
+        // Climb down dead tree into waterfall dungeon
+        objectOperate("Climb", "baxtorian_falls_dead_tree") {
+            val stage = quest("waterfall_quest")
+            if (stage != "has_pebble" && stage != "completed") {
+                statement("You'd rather not climb down into the waterfall.")
+                return@objectOperate
+            }
+            if (!carriesItem("glarials_amulet")) {
+                statement("An invisible force repels you. Perhaps you need something from Glarial's Tomb to enter.")
+                return@objectOperate
+            }
+            if (!carriesItem("glarials_urn_empty")) {
+                statement("You feel you're missing something. Glarial's Urn is needed to perform the ritual.")
+                return@objectOperate
+            }
+            message("You clamber down the dead tree and drop into the waterfall.")
+            delay(2)
+            message("The current pulls you into the waterfall!")
+            tele(2541, 9867, 0)
         }
 
         // Enter waterfall dungeon using rope on dead tree
