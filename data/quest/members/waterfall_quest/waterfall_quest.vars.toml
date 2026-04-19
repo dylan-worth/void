@@ -1,0 +1,20 @@
+[waterfall_quest]
+persist = true
+format = "list"
+values = [ "unstarted", "started", "found_book", "has_pebble", "completed" ]
+
+[waterfall_quest_hudon_found]
+persist = true
+format = "boolean"
+
+[baxtorian_pedestal_air_placed]
+persist = true
+format = "boolean"
+
+[baxtorian_pedestal_earth_placed]
+persist = true
+format = "boolean"
+
+[baxtorian_pedestal_water_placed]
+persist = true
+format = "boolean"
