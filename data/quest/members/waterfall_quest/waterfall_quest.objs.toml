@@ -1,3 +1,11 @@
+[baxtorian_falls_raft]
+id = 2869
+examine = "A raft moored by the riverbank."
+
+[baxtorian_falls_barrel]
+id = 1997
+examine = "A large barrel floating by the waterfall."
+
 [almeras_bookcase]
 id = 2877
 examine = "I wonder what books are in here?"

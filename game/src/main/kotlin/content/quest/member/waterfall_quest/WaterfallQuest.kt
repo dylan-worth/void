@@ -62,8 +62,8 @@ class WaterfallQuest : Script {
                         if (!hasKey) list.add("<maroon>A Key <navy>from the bookcase.")
                     } else {
                         list.add("<navy>I have <maroon>Glarial's Amulet<navy>, <maroon>Glarial's Urn")
-                        list.add("<navy>and <maroon>a Key<navy>. I should use a <maroon>rope <navy>on the")
-                        list.add("<maroon>dead tree <navy>near the waterfall to enter the dungeon.")
+                        list.add("<navy>and <maroon>a Key<navy>. I can use a <maroon>rope <navy>on the")
+                        list.add("<maroon>dead tree<navy>, or climb into the <maroon>barrel <navy>by the falls.")
                         list.add("<navy>Inside, I need 6 of each rune on 3 pedestals:")
                         list.add("<maroon>Air<navy>, <maroon>Earth <navy>and <maroon>Water<navy>.")
                         list.add("<navy>Then use <maroon>Glarial's Urn <navy>on the <maroon>Altar of Baxtorian<navy>.")
@@ -78,13 +78,27 @@ class WaterfallQuest : Script {
                     "<navy>I should speak to <maroon>Rasolo the wandering merchant",
                     "<navy>near the river and show him the <maroon>Book on Baxtorian<navy>.",
                 )
-                "started" -> listOf(
-                    "<str>I spoke to Almera who was worried about her son",
-                    "<str>Hudon exploring the waterfall.",
-                    "",
-                    "<navy>I should search the <maroon>bookcase <navy>in <maroon>Almera's house",
-                    "<navy>for information about the waterfall.",
-                )
+                "started" -> {
+                    val foundHudon = get("waterfall_quest_hudon_found", false)
+                    if (!foundHudon) {
+                        listOf(
+                            "<str>I spoke to Almera who was worried about her son",
+                            "<str>Hudon exploring the waterfall.",
+                            "",
+                            "<navy>I should find <maroon>Hudon <navy>by the waterfall. I can",
+                            "<navy>board the <maroon>raft <navy>near Almera's house to reach him.",
+                        )
+                    } else {
+                        listOf(
+                            "<str>I spoke to Almera who was worried about her son",
+                            "<str>Hudon exploring the waterfall.",
+                            "<str>I found Hudon safe by the waterfall.",
+                            "",
+                            "<navy>I should search the <maroon>bookcase <navy>in <maroon>Almera's house",
+                            "<navy>for information about the waterfall.",
+                        )
+                    }
+                }
                 else -> listOf(
                     "<navy>I can start this quest by speaking to <maroon>Almera<navy>, who",
                     "<navy>lives in a house on the riverbank north of",
@@ -94,10 +108,47 @@ class WaterfallQuest : Script {
             questJournal("Waterfall Quest", lines)
         }
 
+        // Board the raft to reach Hudon at the waterfall
+        objectOperate("Board", "baxtorian_falls_raft") {
+            val stage = quest("waterfall_quest")
+            if (stage == "unstarted") {
+                statement("The raft looks like it could take you to the waterfall, but you have no reason to go there.")
+                return@objectOperate
+            }
+            message("You climb onto the raft and drift down towards the waterfall.")
+            delay(2)
+            tele(2511, 3484, 0)
+        }
+
+        // Fall into the waterfall via barrel (alternate dungeon entry)
+        objectOperate("Use", "baxtorian_falls_barrel") {
+            val stage = quest("waterfall_quest")
+            if (stage != "has_pebble" && stage != "completed") {
+                statement("You'd rather not go in the barrel.")
+                return@objectOperate
+            }
+            if (!carriesItem("glarials_amulet")) {
+                statement("An invisible force repels you. You need something from Glarial's Tomb to enter.")
+                return@objectOperate
+            }
+            if (!carriesItem("glarials_urn_empty")) {
+                statement("You feel you're missing something. Glarial's Urn is needed to perform the ritual.")
+                return@objectOperate
+            }
+            message("You climb into the barrel and it's swept over the waterfall!")
+            delay(2)
+            message("The current pulls you into the waterfall!")
+            tele(2541, 9867, 0)
+        }
+
         // Almera's bookcase gives Book on Baxtorian and a key
         objectOperate("Search", "almeras_bookcase") {
             when (quest("waterfall_quest")) {
                 "started" -> {
+                    if (!get("waterfall_quest_hudon_found", false)) {
+                        statement("You should find Hudon first. Try the raft near the house.")
+                        return@objectOperate
+                    }
                     message("You search the bookcase and find an old book and a small key.")
                     addOrDrop("book_on_baxtorian")
                     addOrDrop("a_key")
@@ -284,7 +335,7 @@ class WaterfallQuest : Script {
                 return@itemOnObjectOperate
             }
             if (!allPedestalsActivated()) {
-                statement("You must activate all six pedestals before using the altar.")
+                statement("You must place runes on all three pedestals before using the altar.")
                 return@itemOnObjectOperate
             }
             message("You pour Glarial's ashes into the urn and place it on the altar.")
