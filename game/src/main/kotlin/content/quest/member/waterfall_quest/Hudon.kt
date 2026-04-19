@@ -6,6 +6,7 @@ import content.entity.player.dialogue.Confused
 import content.entity.player.dialogue.type.npc
 import content.entity.player.dialogue.type.player
 import content.quest.quest
+import content.quest.refreshQuestJournal
 import world.gregs.voidps.engine.Script
 import world.gregs.voidps.engine.entity.character.player.Player
 
@@ -28,6 +29,7 @@ class Hudon : Script {
         player<Idle>("She asked me to check on you. I'll let her know you're safe.")
         npc<Happy>("Tell her I'll be back before dark. I just want to explore a bit more!")
         set("waterfall_quest_hudon_found", true)
+        refreshQuestJournal()
     }
 
     suspend fun Player.exploringHudon() {
