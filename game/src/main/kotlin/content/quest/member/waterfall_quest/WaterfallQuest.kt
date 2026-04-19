@@ -1,5 +1,9 @@
 package content.quest.member.waterfall_quest
 
+import content.entity.combat.hit.damage
+import content.entity.player.dialogue.Idle
+import content.entity.player.dialogue.Neutral
+import content.entity.player.dialogue.type.choice
 import content.entity.player.dialogue.type.item
 import content.entity.player.dialogue.type.statement
 import content.entity.player.inv.item.addOrDrop
@@ -123,12 +127,21 @@ class WaterfallQuest : Script {
             if (stage == "started" && !get("waterfall_quest_hudon_found", false)) {
                 val hudon = NPCs.findOrNull(tile.regionLevel, "hudon_baxtorian_falls") ?: return@objectOperate
                 talkWith(hudon)
+                refreshQuestJournal()
             }
         }
 
         // Swim to the rock by the waterfall (brings you to the dead tree)
         objectOperate("Swim-to", "baxtorian_falls_rock") {
             message("You wade into the water and swim towards the rocky island.")
+            delay(2)
+            message("You haul yourself up onto the rock.")
+            tele(2512, 3469, 0)
+        }
+
+        // Throw rope across to the rock (same destination as Swim-to)
+        itemOnObjectOperate("rope", "baxtorian_falls_rock") {
+            message("You throw the rope over a ledge and swing across to the rocky island.")
             delay(2)
             message("You haul yourself up onto the rock.")
             tele(2512, 3469, 0)
@@ -169,28 +182,51 @@ class WaterfallQuest : Script {
             letterScroll(
                 "Book on Baxtorian",
                 listOf(
+                    "The missing relics",
                     "",
-                    "Baxtorian the Brave was the greatest of",
-                    "the eleven elven chiefs. He led his people",
-                    "south to push back the goblin armies of",
-                    "Bandos.",
+                    "    Many artefacts of elven history were",
+                    "lost after the fourth age. The greatest",
+                    "loss to our collections of elf history",
+                    "were the hidden treasures of Baxtorian.",
+                    "  Some believe these treasures are still",
+                    "unclaimed, but it is more commonly",
+                    "believed that dwarf miners recovered the",
+                    "treasure at the beginning of the third age.",
+                    "Another great loss was Glarial's pebble,",
+                    "a key which allowed her family to visit",
+                    "her tomb. The stone was last seen in the",
+                    "possession of a wandering merchant who",
+                    "trades near the river south of the falls.",
                     "",
-                    "After years of battle he settled with his",
-                    "wife Glarial in the great valley by the",
-                    "river which the humans named after him.",
+                    "The sonnet of Baxtorian",
                     "",
-                    "A great evil came upon the land and",
-                    "Baxtorian led his army north to fight it.",
-                    "He returned victorious, only to find his",
-                    "people slain and Glarial taken.",
+                    "The love between Baxtorian and Glarial",
+                    "was said to have lasted over a century.",
+                    "They lived a peaceful life learning and",
+                    "teaching the laws of nature. When",
+                    "Baxtorian's kingdom was invaded by the",
+                    "dark forces he left on a five year",
+                    "campaign. He returned to find his people",
+                    "slaughtered and his wife taken.",
+                    "    After years of searching for his love",
+                    "he finally gave up and returned to the",
+                    "home he made for Glarial under the",
+                    "Baxtorian Waterfall. Once he entered he",
+                    "never returned. Only Glarial had the",
+                    "power to also enter the waterfall.",
+                    "  Since Baxtorian entered no one but her",
+                    "can follow him in, it's as if the powers",
+                    "of nature still work to protect him.",
                     "",
-                    "His grief was endless. He wandered the",
-                    "wilderness for many years and was never",
-                    "seen again.",
+                    "The power of nature",
                     "",
-                    "Legend says his spirit lingers in the",
-                    "valley to this day, and that Glarial's",
-                    "ghost guards her tomb.",
+                    "    Glarial and Baxtorian were masters",
+                    "of nature. Trees would grow, hills form",
+                    "and rivers flood on their command.",
+                    "Baxtorian in particular had perfected",
+                    "rune lore. It was said that he could use",
+                    "the stones to control water, earth,",
+                    "and air.",
                 ),
             )
         }
@@ -266,25 +302,22 @@ class WaterfallQuest : Script {
             }
         }
 
-        // Climb down dead tree into waterfall dungeon
+        // Climb dead tree — always shows warning; falling deals 8 damage and washes to shore
         objectOperate("Climb", "baxtorian_falls_dead_tree") {
-            val stage = quest("waterfall_quest")
-            if (stage != "has_pebble" && stage != "completed") {
-                statement("You'd rather not climb down into the waterfall.")
-                return@objectOperate
+            statement("It would be difficult to get down this tree without using a rope on it first.")
+            choice {
+                option<Neutral>("Climb down anyway.") {
+                    message("You climb down the tree")
+                    delay(4)
+                    message("and lose your grip.")
+                    message("You get washed away in the current.")
+                    tele(2534, 3450, 0)
+                    damage(8)
+                }
+                option<Idle>("Back away.") {
+                    statement("You leave the tree alone.")
+                }
             }
-            if (!carriesItem("glarials_amulet")) {
-                statement("An invisible force repels you. Perhaps you need something from Glarial's Tomb to enter.")
-                return@objectOperate
-            }
-            if (!carriesItem("glarials_urn_empty")) {
-                statement("You feel you're missing something. Glarial's Urn is needed to perform the ritual.")
-                return@objectOperate
-            }
-            message("You clamber down the dead tree and drop into the waterfall.")
-            delay(2)
-            message("The current pulls you into the waterfall!")
-            tele(2541, 9867, 0)
         }
 
         // Enter waterfall dungeon using rope on dead tree
