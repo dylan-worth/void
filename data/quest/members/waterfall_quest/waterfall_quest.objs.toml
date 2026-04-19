@@ -6,9 +6,9 @@ examine = "A raft moored by the riverbank."
 id = 1996
 examine = "A rocky island by the waterfall."
 
-[almeras_bookcase]
-id = 2877
-examine = "I wonder what books are in here?"
+[hadleys_bookcase]
+id = 380
+examine = "A bookcase full of books about the local area."
 
 [glarials_tombstone]
 id = 2862
