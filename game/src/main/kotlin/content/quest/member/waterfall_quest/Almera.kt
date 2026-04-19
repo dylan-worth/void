@@ -54,8 +54,8 @@ class Almera : Script {
         } else {
             player<Happy>("Yes, he's fine! Just exploring by the waterfall.")
             npc<Happy>("Oh, thank goodness. Did you find anything useful in the house?")
-            player<Idle>("I'm still searching.")
-            npc<Idle>("Don't forget the bookcase in the back room. My husband collected many books about Baxtorian and this valley.")
+            player<Idle>("I'm still looking.")
+            npc<Idle>("Try Hadley's house down by the river. He's a tourist guide and keeps books about the local area - I'm sure there's something useful in there.")
         }
     }
 

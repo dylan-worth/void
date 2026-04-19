@@ -100,8 +100,8 @@ class WaterfallQuest : Script {
                             "<str>Hudon exploring the waterfall.",
                             "<str>I found Hudon safe by the waterfall.",
                             "",
-                            "<navy>I should search the <maroon>bookcase <navy>in <maroon>Almera's house",
-                            "<navy>for information about the waterfall.",
+                            "<navy>I should search the <maroon>bookcase <navy>in <maroon>Hadley's house",
+                            "<navy>near the river for information about the waterfall.",
                         )
                     }
                 }
@@ -147,17 +147,12 @@ class WaterfallQuest : Script {
             tele(2512, 3469, 0)
         }
 
-        // Almera's bookcase gives Book on Baxtorian and a key
-        objectOperate("Search", "almeras_bookcase") {
+        // Hadley's bookcase gives Book on Baxtorian
+        objectOperate("Search", "hadleys_bookcase") {
             when (quest("waterfall_quest")) {
                 "started" -> {
-                    if (!get("waterfall_quest_hudon_found", false)) {
-                        statement("You should find Hudon first. Try the raft near the house.")
-                        return@objectOperate
-                    }
-                    message("You search the bookcase and find an old book and a small key.")
+                    message("You search the bookcase and find an interesting book.")
                     addOrDrop("book_on_baxtorian")
-                    addOrDrop("a_key")
                     item("book_on_baxtorian", 600, "You find a book about Baxtorian.")
                     set("waterfall_quest", "found_book")
                     refreshQuestJournal()
@@ -166,9 +161,6 @@ class WaterfallQuest : Script {
                     if (!carriesItem("book_on_baxtorian") && quest("waterfall_quest") == "found_book") {
                         message("You find another copy of the book.")
                         addOrDrop("book_on_baxtorian")
-                    } else if (!carriesItem("a_key")) {
-                        message("You find a spare key on the shelf.")
-                        addOrDrop("a_key")
                     } else {
                         statement("You search the bookcase but find nothing more of interest.")
                     }

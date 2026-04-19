@@ -1,3 +1,7 @@
+[rope]
+id = 954
+examine = "Useful for climbing."
+
 [book_on_baxtorian]
 id = 292
 tradeable = false
