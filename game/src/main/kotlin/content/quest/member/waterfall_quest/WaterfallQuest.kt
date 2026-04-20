@@ -241,8 +241,14 @@ class WaterfallQuest : Script {
             }
         }
 
+        // Climb up the ladder to exit Glarial's Tomb
+        objectOperate("Climb-up", "glarials_tomb_ladder") {
+            message("You climb up the ladder and emerge on the surface.")
+            tele(2530, 3455, 0)
+        }
+
         // Chest near moss giants — gives Glarial's Amulet if not in inventory
-        objectOperate("Search", "glarials_tomb_chest") {
+        objectOperate("Open", "glarials_tomb_chest") {
             val stage = quest("waterfall_quest")
             if (stage != "has_pebble" && stage != "completed") {
                 statement("You have no reason to search this chest.")
