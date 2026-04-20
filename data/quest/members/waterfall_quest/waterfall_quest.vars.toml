@@ -7,14 +7,10 @@ values = [ "unstarted", "started", "found_book", "has_pebble", "completed" ]
 persist = true
 format = "boolean"
 
-[baxtorian_pedestal_air_placed]
+[baxtorian_runes_placed]
 persist = true
 format = "boolean"
 
-[baxtorian_pedestal_earth_placed]
-persist = true
-format = "boolean"
-
-[baxtorian_pedestal_water_placed]
+[baxtorian_amulet_placed]
 persist = true
 format = "boolean"

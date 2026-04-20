@@ -63,8 +63,8 @@ class Almera : Script {
         npc<Idle>("How is Hudon? Is he safe?")
         player<Happy>("He seems perfectly fine, just exploring.")
         npc<Happy>("Oh, thank goodness!")
-        player<Idle>("I found an old book about Baxtorian in your house.")
-        npc<Idle>("Ah, that old thing. Rasolo, the travelling merchant down by the river, was asking about that book not long ago. Perhaps he knows something about it.")
+        player<Idle>("I found a book about Baxtorian. It mentions a gnome who has Glarial's pebble.")
+        npc<Idle>("Yes, I have heard stories of a gnome who carries that pebble. There is a dungeon near the Tree Gnome Village. Perhaps you will find him there.")
     }
 
     suspend fun Player.findingTombItems() {

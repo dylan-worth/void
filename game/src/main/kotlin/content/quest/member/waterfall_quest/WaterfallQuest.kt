@@ -7,7 +7,6 @@ import content.entity.player.dialogue.type.choice
 import content.entity.player.dialogue.type.item
 import content.entity.player.dialogue.type.statement
 import content.entity.player.inv.item.addOrDrop
-import content.quest.letterScroll
 import content.quest.quest
 import content.quest.questComplete
 import content.quest.questJournal
@@ -15,14 +14,17 @@ import content.quest.refreshQuestJournal
 import world.gregs.voidps.engine.Script
 import world.gregs.voidps.engine.client.message
 import world.gregs.voidps.engine.client.ui.dialogue.talkWith
-import world.gregs.voidps.engine.entity.character.npc.NPCs
 import world.gregs.voidps.engine.entity.character.jingle
 import world.gregs.voidps.engine.entity.character.move.tele
+import world.gregs.voidps.engine.entity.character.npc.NPCs
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.skill.Skill
 import world.gregs.voidps.engine.entity.character.player.skill.exp.exp
+import world.gregs.voidps.engine.entity.item.Item
 import world.gregs.voidps.engine.event.AuditLog
+import world.gregs.voidps.engine.inv.Inventory
 import world.gregs.voidps.engine.inv.carriesItem
+import world.gregs.voidps.engine.inv.equipment
 import world.gregs.voidps.engine.inv.inventory
 import world.gregs.voidps.engine.inv.remove
 import world.gregs.voidps.engine.inv.transact.operation.AddItem.add
@@ -30,19 +32,28 @@ import world.gregs.voidps.engine.queue.softQueue
 
 class WaterfallQuest : Script {
 
+    private val bannedCategories = setOf(
+        "throwable", "arrow", "bolt",
+        "magic_armour", "magic_weapon",
+        "melee_armour_low", "melee_armour_mid", "melee_armour_high",
+        "melee_weapon_low", "melee_weapon_mid", "melee_weapon_high",
+        "prayer_armour", "prayer_consumable",
+        "range_armour", "range_weapon",
+    )
+
     init {
         questJournalOpen("waterfall_quest") {
             val lines = when (quest("waterfall_quest")) {
                 "completed" -> listOf(
                     "<str>I spoke to Almera who was worried about her son",
                     "<str>Hudon exploring the waterfall.",
-                    "<str>I found a Book on Baxtorian in Almera's house.",
-                    "<str>I traded the book to Rasolo in exchange for",
-                    "<str>Glarial's Pebble.",
+                    "<str>I found a Book on Baxtorian in Hadley's house.",
+                    "<str>I freed Golrie from the gnome dungeon and he",
+                    "<str>gave me Glarial's Pebble.",
                     "<str>I entered Glarial's Tomb and retrieved Glarial's",
-                    "<str>Amulet, Glarial's Urn, and a key.",
-                    "<str>I entered the Waterfall Dungeon and performed the",
-                    "<str>ritual at the Altar of Baxtorian.",
+                    "<str>Amulet and Glarial's Urn.",
+                    "<str>I entered the Waterfall Dungeon and performed",
+                    "<str>the ritual at the Chalice of Baxtorian.",
                     "",
                     "<red>QUEST COMPLETE!",
                     "",
@@ -51,38 +62,38 @@ class WaterfallQuest : Script {
                     val list = mutableListOf(
                         "<str>I spoke to Almera who was worried about her son",
                         "<str>Hudon exploring the waterfall.",
-                        "<str>I found a Book on Baxtorian in Almera's house.",
-                        "<str>I traded the book to Rasolo in exchange for",
-                        "<str>Glarial's Pebble.",
+                        "<str>I found a Book on Baxtorian in Hadley's house.",
+                        "<str>I freed Golrie from the gnome dungeon and he",
+                        "<str>gave me Glarial's Pebble.",
                         "",
                     )
                     val hasAmulet = carriesItem("glarials_amulet")
-                    val hasUrn = carriesItem("glarials_urn_empty")
-                    val hasKey = carriesItem("a_key")
-                    if (!hasAmulet || !hasUrn || !hasKey) {
+                    val hasUrn = carriesItem("glarials_urn")
+                    if (!hasAmulet || !hasUrn) {
                         list.add("<navy>I need to enter <maroon>Glarial's Tomb <navy>by using the pebble")
                         list.add("<navy>on the <maroon>Tombstone <navy>on the island west of the falls.")
-                        list.add("<navy>Inside I must find:")
-                        if (!hasAmulet) list.add("<maroon>Glarial's Amulet <navy>from the coffin.")
-                        if (!hasUrn) list.add("<maroon>Glarial's Urn <navy>from a crate.")
-                        if (!hasKey) list.add("<maroon>A Key <navy>from the bookcase.")
+                        list.add("<navy>I must not bring weapons or armour. Inside I need:")
+                        if (!hasAmulet) list.add("<maroon>Glarial's Amulet <navy>from the chest.")
+                        if (!hasUrn) list.add("<maroon>Glarial's Urn <navy>from the coffin.")
                     } else {
-                        list.add("<navy>I have <maroon>Glarial's Amulet<navy>, <maroon>Glarial's Urn")
-                        list.add("<navy>and <maroon>a Key<navy>. I should swim to the <maroon>rock <navy>or")
-                        list.add("<navy>use a <maroon>rope <navy>and climb the <maroon>dead tree <navy>by the falls.")
-                        list.add("<navy>Inside, I need 6 of each rune on 3 pedestals:")
-                        list.add("<maroon>Air<navy>, <maroon>Earth <navy>and <maroon>Water<navy>.")
-                        list.add("<navy>Then use <maroon>Glarial's Urn <navy>on the <maroon>Altar of Baxtorian<navy>.")
+                        list.add("<navy>I have <maroon>Glarial's Amulet <navy>and <maroon>Glarial's Urn<navy>.")
+                        list.add("<navy>I should swim to the <maroon>rock <navy>or use a <maroon>rope")
+                        list.add("<navy>on the <maroon>dead tree <navy>by the falls to enter.")
+                        list.add("<navy>Inside, I need 6 each of <maroon>air<navy>, <maroon>earth")
+                        list.add("<navy>and <maroon>water <navy>runes for the pedestals.")
+                        list.add("<navy>Then use <maroon>Glarial's Amulet <navy>on the statue,")
+                        list.add("<navy>and <maroon>Glarial's Urn <navy>on the <maroon>Chalice<navy>.")
                     }
                     list
                 }
                 "found_book" -> listOf(
                     "<str>I spoke to Almera who was worried about her son",
                     "<str>Hudon exploring the waterfall.",
-                    "<str>I found a Book on Baxtorian in Almera's house.",
+                    "<str>I found a Book on Baxtorian in Hadley's house.",
                     "",
-                    "<navy>I should speak to <maroon>Rasolo the wandering merchant",
-                    "<navy>near the river and show him the <maroon>Book on Baxtorian<navy>.",
+                    "<navy>The book mentions a gnome who has <maroon>Glarial's Pebble<navy>.",
+                    "<navy>I should search the dungeon near the",
+                    "<maroon>Tree Gnome Village <navy>to find him.",
                 )
                 "started" -> {
                     val foundHudon = get("waterfall_quest_hudon_found", false)
@@ -131,7 +142,7 @@ class WaterfallQuest : Script {
             }
         }
 
-        // Swim to the rock by the waterfall (brings you to the dead tree)
+        // Swim to the rock by the waterfall
         objectOperate("Swim-to", "baxtorian_falls_rock") {
             message("You wade into the water and swim towards the rocky island.")
             delay(2)
@@ -139,7 +150,7 @@ class WaterfallQuest : Script {
             tele(2512, 3469, 0)
         }
 
-        // Throw rope across to the rock (same destination as Swim-to)
+        // Throw rope across to the rock
         itemOnObjectOperate("rope", "baxtorian_falls_rock") {
             message("You throw the rope over a ledge and swing across to the rocky island.")
             delay(2)
@@ -169,71 +180,54 @@ class WaterfallQuest : Script {
             }
         }
 
-        // Read the Book on Baxtorian
-        itemOption("Read", "book_on_baxtorian") {
-            letterScroll(
-                "Book on Baxtorian",
-                listOf(
-                    "The missing relics",
-                    "",
-                    "    Many artefacts of elven history were",
-                    "lost after the fourth age. The greatest",
-                    "loss to our collections of elf history",
-                    "were the hidden treasures of Baxtorian.",
-                    "  Some believe these treasures are still",
-                    "unclaimed, but it is more commonly",
-                    "believed that dwarf miners recovered the",
-                    "treasure at the beginning of the third age.",
-                    "Another great loss was Glarial's pebble,",
-                    "a key which allowed her family to visit",
-                    "her tomb. The stone was last seen in the",
-                    "possession of a wandering merchant who",
-                    "trades near the river south of the falls.",
-                    "",
-                    "The sonnet of Baxtorian",
-                    "",
-                    "The love between Baxtorian and Glarial",
-                    "was said to have lasted over a century.",
-                    "They lived a peaceful life learning and",
-                    "teaching the laws of nature. When",
-                    "Baxtorian's kingdom was invaded by the",
-                    "dark forces he left on a five year",
-                    "campaign. He returned to find his people",
-                    "slaughtered and his wife taken.",
-                    "    After years of searching for his love",
-                    "he finally gave up and returned to the",
-                    "home he made for Glarial under the",
-                    "Baxtorian Waterfall. Once he entered he",
-                    "never returned. Only Glarial had the",
-                    "power to also enter the waterfall.",
-                    "  Since Baxtorian entered no one but her",
-                    "can follow him in, it's as if the powers",
-                    "of nature still work to protect him.",
-                    "",
-                    "The power of nature",
-                    "",
-                    "    Glarial and Baxtorian were masters",
-                    "of nature. Trees would grow, hills form",
-                    "and rivers flood on their command.",
-                    "Baxtorian in particular had perfected",
-                    "rune lore. It was said that he could use",
-                    "the stones to control water, earth,",
-                    "and air.",
-                ),
-            )
+        // Gnome dungeon bookcase — lore only
+        objectOperate("Search", "gnome_dungeon_bookcase") {
+            statement("You search the bookcase but find nothing of interest.")
         }
 
-        // Enter Glarial's Tomb using the pebble on the tombstone
+        // Gnome dungeon crate — gives key 293 to open the gate
+        objectOperate("Search", "gnome_dungeon_crate") {
+            if (quest("waterfall_quest") != "found_book") {
+                statement("There is nothing of interest in this crate.")
+                return@objectOperate
+            }
+            if (carriesItem("a_key")) {
+                statement("There is nothing more of use in this crate.")
+                return@objectOperate
+            }
+            message("You rummage through the crate and find a small key.")
+            addOrDrop("a_key")
+            item("a_key", 600, "You find a key!")
+        }
+
+        // Gnome dungeon gate — needs key 293 to open
+        objectOperate("Open", "gnome_dungeon_gate") {
+            if (!carriesItem("a_key")) {
+                statement("The gate is locked. You need a key to open it.")
+                return@objectOperate
+            }
+            message("You unlock the gate with the key.")
+            inventory.remove("a_key", 1)
+            message("The gate swings open.")
+        }
+
+        // Enter Glarial's Tomb — Entrana-style check, drains prayer, teleports inside
         itemOnObjectOperate("glarials_pebble", "glarials_tombstone") {
             val stage = quest("waterfall_quest")
             if (stage != "has_pebble" && stage != "completed") {
                 statement("This tombstone seems significant, but you're not sure what to do.")
                 return@itemOnObjectOperate
             }
+            val forbidden = combatItemCheck(inventory) ?: combatItemCheck(equipment)
+            if (forbidden != null) {
+                statement("You cannot enter Glarial's Tomb with weapons or armour.")
+                return@itemOnObjectOperate
+            }
             message("You press the pebble to the tombstone. Strange runes glow briefly...")
             delay(1)
             message("You feel yourself pulled underground.")
-            tele(2524, 9840, 0)
+            levels.set(Skill.Prayer, 0)
+            tele(2555, 9844, 0)
         }
 
         // Exit Glarial's Tomb via the tombstone inside
@@ -244,57 +238,52 @@ class WaterfallQuest : Script {
             }
         }
 
-        // Search Glarial's Coffin for the amulet
+        // Chest near moss giants — gives Glarial's Amulet
+        objectOperate("Search", "glarials_tomb_chest") {
+            val stage = quest("waterfall_quest")
+            if (stage != "has_pebble" && stage != "completed") {
+                statement("You have no reason to search this chest.")
+                return@objectOperate
+            }
+            if (!carriesItem("glarials_amulet")) {
+                message("You search the chest carefully...")
+                delay(2)
+                message("You find a bright green amulet inside.")
+                addOrDrop("glarials_amulet")
+                item("glarials_amulet", 600, "You find Glarial's Amulet!")
+            } else {
+                statement("You have already taken everything useful from this chest.")
+            }
+        }
+
+        // Glarial's Coffin — gives Glarial's Urn (full)
         objectOperate("Search", "glarials_coffin") {
             val stage = quest("waterfall_quest")
             if (stage != "has_pebble" && stage != "completed") {
                 statement("You have no reason to disturb this coffin.")
                 return@objectOperate
             }
-            if (!carriesItem("glarials_amulet")) {
+            if (!carriesItem("glarials_urn")) {
                 message("You search the coffin carefully...")
                 delay(2)
-                message("You find a bright green amulet inside.")
-                addOrDrop("glarials_amulet")
-                item("glarials_amulet", 600, "You find Glarial's Amulet!")
+                message("You find an urn filled with ashes inside.")
+                addOrDrop("glarials_urn")
+                item("glarials_urn", 600, "You find Glarial's Urn!")
             } else {
                 statement("You have already taken everything useful from this coffin.")
             }
         }
 
-        // Search crate in Glarial's Tomb for the urn
+        // Bookcase and crate in Glarial's Tomb — flavor only
         objectOperate("Search", "glarials_tomb_crate") {
-            val stage = quest("waterfall_quest")
-            if (stage != "has_pebble" && stage != "completed") {
-                statement("There's nothing of interest in this crate.")
-                return@objectOperate
-            }
-            if (!carriesItem("glarials_urn_empty")) {
-                message("You rummage through the crate and find an ornate urn.")
-                addOrDrop("glarials_urn_empty")
-                item("glarials_urn_empty", 600, "You find Glarial's Urn!")
-            } else {
-                statement("There is nothing more of use in this crate.")
-            }
+            statement("There is nothing of use in this crate.")
         }
 
-        // Search bookcase in Glarial's Tomb for a spare key
         objectOperate("Search", "glarials_tomb_bookcase") {
-            val stage = quest("waterfall_quest")
-            if (stage != "has_pebble" && stage != "completed") {
-                statement("There is nothing of interest here.")
-                return@objectOperate
-            }
-            if (!carriesItem("a_key")) {
-                message("You search the bookcase and find a small key.")
-                addOrDrop("a_key")
-                item("a_key", 600, "You find a key!")
-            } else {
-                statement("There is nothing more of use on these shelves.")
-            }
+            statement("You search the bookcase but find nothing of interest.")
         }
 
-        // Climb dead tree — always shows warning; falling deals 8 damage and washes to shore
+        // Climb dead tree — warning; falling deals 8 damage
         objectOperate("Climb", "baxtorian_falls_dead_tree") {
             statement("It would be difficult to get down this tree without using a rope on it first.")
             choice {
@@ -323,7 +312,7 @@ class WaterfallQuest : Script {
                 statement("An invisible force repels you. Perhaps you need something from Glarial's Tomb to enter.")
                 return@itemOnObjectOperate
             }
-            if (!carriesItem("glarials_urn_empty")) {
+            if (!carriesItem("glarials_urn")) {
                 statement("You feel you're missing something. Glarial's Urn is needed to perform the ritual.")
                 return@itemOnObjectOperate
             }
@@ -333,51 +322,67 @@ class WaterfallQuest : Script {
             tele(2541, 9867, 0)
         }
 
-        // Open the waterfall dungeon door using the key
+        // Waterfall dungeon crate — gives second key (298) to open the inner door
+        objectOperate("Search", "waterfall_dungeon_crate") {
+            if (quest("waterfall_quest") != "has_pebble") {
+                statement("There is nothing of interest in this crate.")
+                return@objectOperate
+            }
+            if (carriesItem("a_key_waterfall_dungeon")) {
+                statement("There is nothing more of use in this crate.")
+                return@objectOperate
+            }
+            message("You search the crate and find a key.")
+            addOrDrop("a_key_waterfall_dungeon")
+            item("a_key_waterfall_dungeon", 600, "You find a key!")
+        }
+
+        // Open the waterfall dungeon door using the dungeon key (298)
         objectOperate("Open", "waterfall_dungeon_door") {
-            if (!carriesItem("a_key")) {
+            if (!carriesItem("a_key_waterfall_dungeon")) {
                 statement("The door is sealed. You need a key to open it.")
                 return@objectOperate
             }
             message("You use the key to unlock the stone door.")
-            inventory.remove("a_key", 1)
+            inventory.remove("a_key_waterfall_dungeon", 1)
             tele(2596, 9882, 0)
         }
 
-        // Place runes on each pedestal
-        for ((rune, pedestal) in RUNE_PEDESTALS) {
-            itemOnObjectOperate(rune, pedestal) {
-                if (quest("waterfall_quest") != "has_pebble") {
-                    statement("Nothing happens.")
-                    return@itemOnObjectOperate
-                }
-                if (get("${pedestal}_placed", false)) {
-                    statement("This pedestal has already been activated.")
-                    return@itemOnObjectOperate
-                }
-                if (!inventory.contains(rune, 6)) {
-                    val runeName = rune.replace("_rune", " rune")
-                    statement("You need 6 ${runeName}s to activate this pedestal.")
-                    return@itemOnObjectOperate
-                }
-                val runeName = rune.replace("_rune", " rune")
-                message("You place 6 ${runeName}s on the pedestal. It glows with a soft light.")
-                inventory.remove(rune, 6)
-                set("${pedestal}_placed", true)
-            }
-        }
+        // Place runes on the pedestal — requires 6 of each type at once
+        itemOnObjectOperate("air_rune", "baxtorian_rune_pedestal") { placeRunes() }
+        itemOnObjectOperate("earth_rune", "baxtorian_rune_pedestal") { placeRunes() }
+        itemOnObjectOperate("water_rune", "baxtorian_rune_pedestal") { placeRunes() }
 
-        // Use Glarial's Urn on the Altar of Baxtorian to complete the quest
-        itemOnObjectOperate("glarials_urn_empty", "baxtorian_altar") {
+        // Use Glarial's Amulet on the statue of Glarial
+        itemOnObjectOperate("glarials_amulet", "baxtorian_statue") {
             if (quest("waterfall_quest") != "has_pebble") {
                 statement("Nothing happens.")
                 return@itemOnObjectOperate
             }
-            if (!allPedestalsActivated()) {
-                statement("You must place runes on all three pedestals before using the altar.")
+            if (!get("baxtorian_runes_placed", false)) {
+                message("As you touch the statue, a bolt of energy blasts you back!")
+                damage(20)
                 return@itemOnObjectOperate
             }
-            message("You pour Glarial's ashes into the urn and place it on the altar.")
+            if (get("baxtorian_amulet_placed", false)) {
+                statement("You have already placed the amulet on the statue.")
+                return@itemOnObjectOperate
+            }
+            message("You place Glarial's Amulet on the statue. It glows with a warm light.")
+            set("baxtorian_amulet_placed", true)
+        }
+
+        // Use Glarial's Urn on the Chalice of Baxtorian to complete the quest
+        itemOnObjectOperate("glarials_urn", "baxtorian_chalice") {
+            if (quest("waterfall_quest") != "has_pebble") {
+                statement("Nothing happens.")
+                return@itemOnObjectOperate
+            }
+            if (!get("baxtorian_runes_placed", false) || !get("baxtorian_amulet_placed", false)) {
+                statement("You must place the runes on the pedestal and the amulet on the statue first.")
+                return@itemOnObjectOperate
+            }
+            message("You place Glarial's Urn on the chalice.")
             delay(2)
             message("The room fills with a blinding golden light!")
             delay(1)
@@ -386,11 +391,38 @@ class WaterfallQuest : Script {
         }
     }
 
-    fun Player.allPedestalsActivated(): Boolean =
-        RUNE_PEDESTALS.values.all { get("${it}_placed", false) }
+    private fun Player.combatItemCheck(inv: Inventory): Item? {
+        for (item in inv.items) {
+            if (item.isEmpty()) continue
+            val categories: Set<String> = item.def.getOrNull("categories") ?: continue
+            if (bannedCategories.any { categories.contains(it) }) return item
+        }
+        return null
+    }
 
-    fun Player.completeQuest() {
-        inventory.remove("glarials_urn_empty", 1)
+    private suspend fun Player.placeRunes() {
+        if (quest("waterfall_quest") != "has_pebble") {
+            statement("Nothing happens.")
+            return
+        }
+        if (get("baxtorian_runes_placed", false)) {
+            statement("The pedestals have already been activated.")
+            return
+        }
+        if (!inventory.contains("air_rune", 6) || !inventory.contains("earth_rune", 6) || !inventory.contains("water_rune", 6)) {
+            statement("You need 6 air runes, 6 earth runes and 6 water runes to activate the pedestals.")
+            return
+        }
+        message("You place 6 air runes, 6 earth runes and 6 water runes on the pedestals.")
+        inventory.remove("air_rune", 6)
+        inventory.remove("earth_rune", 6)
+        inventory.remove("water_rune", 6)
+        message("The pedestals glow with a soft light.")
+        set("baxtorian_runes_placed", true)
+    }
+
+    private fun Player.completeQuest() {
+        inventory.remove("glarials_urn", 1)
         inventory.transaction {
             add("diamond")
             add("diamond")
@@ -416,13 +448,5 @@ class WaterfallQuest : Script {
                 item = "glarials_amulet",
             )
         }
-    }
-
-    companion object {
-        val RUNE_PEDESTALS = mapOf(
-            "air_rune" to "baxtorian_pedestal_air",
-            "earth_rune" to "baxtorian_pedestal_earth",
-            "water_rune" to "baxtorian_pedestal_water",
-        )
     }
 }

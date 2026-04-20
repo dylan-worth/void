@@ -10,12 +10,28 @@ examine = "A rocky island by the waterfall."
 id = 380
 examine = "A bookcase full of books about the local area."
 
+[gnome_dungeon_bookcase]
+id = 1989
+examine = "A bookcase in the dungeon."
+
+[gnome_dungeon_crate]
+id = 1990
+examine = "A crate."
+
+[gnome_dungeon_gate]
+id = 1991
+examine = "A barred gate."
+
 [glarials_tombstone]
 id = 2862
 examine = "A tombstone dedicated to Glarial, wife of Baxtorian."
 
+[glarials_tomb_chest]
+id = 33047
+examine = "A chest."
+
 [glarials_coffin]
-id = 2861
+id = 33066
 examine = "The ornate coffin of Glarial."
 
 [glarials_tomb_crate]
@@ -30,22 +46,22 @@ examine = "A bookcase in the tomb."
 id = 2020
 examine = "A dead tree overhanging the waterfall."
 
+[waterfall_dungeon_crate]
+id = 1999
+examine = "A crate in the dungeon."
+
 [waterfall_dungeon_door]
-id = 2892
+id = 2002
 examine = "A stone door engraved with elvish runes."
 
-[baxtorian_pedestal_air]
-id = 2886
-examine = "A stone pedestal engraved with an air symbol."
+[baxtorian_rune_pedestal]
+id = 2004
+examine = "A stone pedestal engraved with elemental symbols."
 
-[baxtorian_pedestal_earth]
-id = 2887
-examine = "A stone pedestal engraved with an earth symbol."
+[baxtorian_statue]
+id = 2006
+examine = "A stone statue of Glarial."
 
-[baxtorian_pedestal_water]
-id = 2888
-examine = "A stone pedestal engraved with a water symbol."
-
-[baxtorian_altar]
-id = 2864
-examine = "The altar of Baxtorian."
+[baxtorian_chalice]
+id = 2014
+examine = "The chalice of Baxtorian."

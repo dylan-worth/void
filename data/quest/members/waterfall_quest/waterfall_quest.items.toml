@@ -4,6 +4,7 @@ tradeable = false
 weight = 0.51
 examine = "A book on elven history in northern Gielinor."
 kept = "Wilderness"
+book = "book_on_baxtorian"
 
 [a_key]
 id = 293
