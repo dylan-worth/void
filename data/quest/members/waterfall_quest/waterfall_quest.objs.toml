@@ -42,6 +42,10 @@ examine = "A crate."
 id = 2855
 examine = "A bookcase in the tomb."
 
+[glarials_tomb_ladder]
+id = 1757
+examine = "A ladder leading back to the surface."
+
 [baxtorian_falls_dead_tree]
 id = 2020
 examine = "A dead tree overhanging the waterfall."
