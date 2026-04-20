@@ -237,14 +237,14 @@ class WaterfallQuest : Script {
         objectOperate("Exit", "glarials_tombstone") {
             if (tile.y > 5000) {
                 message("You climb back up through the tomb entrance.")
-                tele(2530, 3455, 0)
+                tele(2557, 3444, 0)
             }
         }
 
         // Climb up the ladder to exit Glarial's Tomb
         objectOperate("Climb-up", "glarials_tomb_ladder") {
             message("You climb up the ladder and emerge on the surface.")
-            tele(2530, 3455, 0)
+            tele(2557, 3444, 0)
         }
 
         // Chest near moss giants — gives Glarial's Amulet if not in inventory
@@ -310,24 +310,37 @@ class WaterfallQuest : Script {
             }
         }
 
-        // Enter waterfall dungeon using rope on dead tree
+        // Enter waterfall dungeon using rope on dead tree — lands at cave entrance on surface
         itemOnObjectOperate("rope", "baxtorian_falls_dead_tree") {
             val stage = quest("waterfall_quest")
             if (stage != "has_pebble" && stage != "completed") {
                 statement("You'd rather not swing into the waterfall.")
                 return@itemOnObjectOperate
             }
+            message("You tie the rope to the dead tree and swing out over the falls.")
+            delay(2)
+            message("You land on the small island at the base of the waterfall.")
+            tele(2511, 3463, 0)
+        }
+
+        // Enter the waterfall cave — item checks happen here, then go underground
+        objectOperate("Enter", "waterfall_cave_entrance") {
+            val stage = quest("waterfall_quest")
+            if (stage != "has_pebble" && stage != "completed") {
+                statement("You have no reason to enter the waterfall.")
+                return@objectOperate
+            }
             if (!carriesItem("glarials_amulet")) {
                 statement("An invisible force repels you. Perhaps you need something from Glarial's Tomb to enter.")
-                return@itemOnObjectOperate
+                return@objectOperate
             }
             if (!carriesItem("glarials_urn")) {
                 statement("You feel you're missing something. Glarial's Urn is needed to perform the ritual.")
-                return@itemOnObjectOperate
+                return@objectOperate
             }
-            message("You tie the rope to the dead tree and swing out over the falls.")
-            delay(2)
-            message("The current pulls you into the waterfall!")
+            message("The amulet glows as you step into the waterfall.")
+            delay(1)
+            message("The current pulls you into the dungeon!")
             tele(2541, 9867, 0)
         }
 
