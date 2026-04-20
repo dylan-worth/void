@@ -46,6 +46,10 @@ examine = "A bookcase in the tomb."
 id = 1757
 examine = "A ladder leading back to the surface."
 
+[waterfall_cave_entrance]
+id = 37246
+examine = "The entrance to the waterfall dungeon."
+
 [baxtorian_falls_dead_tree]
 id = 2020
 examine = "A dead tree overhanging the waterfall."
