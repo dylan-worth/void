@@ -187,7 +187,8 @@ class WaterfallQuest : Script {
 
         // Gnome dungeon crate — gives key 293 to open the gate
         objectOperate("Search", "gnome_dungeon_crate") {
-            if (quest("waterfall_quest") != "found_book") {
+            val stage = quest("waterfall_quest")
+            if (stage != "found_book" && stage != "has_pebble") {
                 statement("There is nothing of interest in this crate.")
                 return@objectOperate
             }
@@ -200,7 +201,7 @@ class WaterfallQuest : Script {
             item("a_key", 600, "You find a key!")
         }
 
-        // Gnome dungeon gate — needs key 293 to open
+        // Gnome dungeon gate — needs key 293 to open; teleports player inside cell
         objectOperate("Open", "gnome_dungeon_gate") {
             if (!carriesItem("a_key")) {
                 statement("The gate is locked. You need a key to open it.")
@@ -209,6 +210,8 @@ class WaterfallQuest : Script {
             message("You unlock the gate with the key.")
             inventory.remove("a_key", 1)
             message("The gate swings open.")
+            delay(1)
+            tele(2516, 9583, 0)
         }
 
         // Enter Glarial's Tomb — Entrana-style check, drains prayer, teleports inside
