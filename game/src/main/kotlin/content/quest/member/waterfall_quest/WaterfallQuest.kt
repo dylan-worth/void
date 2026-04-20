@@ -142,20 +142,24 @@ class WaterfallQuest : Script {
             }
         }
 
-        // Swim to the rock by the waterfall
+        // Swim to the rock — current too strong, washes player downstream
         objectOperate("Swim-to", "baxtorian_falls_rock") {
-            message("You wade into the water and swim towards the rocky island.")
-            delay(2)
-            message("You haul yourself up onto the rock.")
-            tele(2512, 3469, 0)
+            message("It looks like a long distance, but you swim out into the water.")
+            delay(3)
+            message("The current is too strong, you feel yourself being pulled under.")
+            delay(3)
+            message("You are washed downstream but feel lucky to be alive.")
+            tele(2527, 3413, 0)
         }
 
-        // Throw rope across to the rock
+        // Throw rope at rock — same outcome, washed downstream
         itemOnObjectOperate("rope", "baxtorian_falls_rock") {
-            message("You throw the rope over a ledge and swing across to the rocky island.")
-            delay(2)
-            message("You haul yourself up onto the rock.")
-            tele(2512, 3469, 0)
+            message("It looks like a long distance, but you swim out into the water.")
+            delay(3)
+            message("The current is too strong, you feel yourself being pulled under.")
+            delay(3)
+            message("You are washed downstream but feel lucky to be alive.")
+            tele(2527, 3413, 0)
         }
 
         // Hadley's bookcase gives Book on Baxtorian
