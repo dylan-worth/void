@@ -1,6 +1,6 @@
 [waterfall_quest]
-id = 251
+id = 145
 persist = true
 format = "map"
 default = "unstarted"
-values = { unstarted = 0, started = 1, found_book = 2, has_pebble = 3, completed = 4 }
+values = { unstarted = 0, started = 1, found_book = 2, has_pebble = 3, completed = 5 }

@@ -241,22 +241,22 @@ class WaterfallQuest : Script {
             }
         }
 
-        // Chest near moss giants — gives Glarial's Amulet
+        // Chest near moss giants — gives Glarial's Amulet if not in inventory
         objectOperate("Search", "glarials_tomb_chest") {
             val stage = quest("waterfall_quest")
             if (stage != "has_pebble" && stage != "completed") {
                 statement("You have no reason to search this chest.")
                 return@objectOperate
             }
-            if (!carriesItem("glarials_amulet")) {
-                message("You search the chest carefully...")
-                delay(2)
-                message("You find a bright green amulet inside.")
-                addOrDrop("glarials_amulet")
-                item("glarials_amulet", 600, "You find Glarial's Amulet!")
-            } else {
-                statement("You have already taken everything useful from this chest.")
+            if (carriesItem("glarials_amulet")) {
+                statement("You search the chest but find nothing useful.")
+                return@objectOperate
             }
+            message("You search the chest carefully...")
+            delay(2)
+            message("You find a bright green amulet inside.")
+            addOrDrop("glarials_amulet")
+            item("glarials_amulet", 600, "You find Glarial's Amulet!")
         }
 
         // Glarial's Coffin — gives Glarial's Urn (full)

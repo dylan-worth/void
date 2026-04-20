@@ -27,7 +27,7 @@ id = 1992
 examine = "A tombstone dedicated to Glarial, wife of Baxtorian."
 
 [glarials_tomb_chest]
-id = 33047
+id = 33046
 examine = "A chest."
 
 [glarials_coffin]
