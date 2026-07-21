@@ -1,7 +1,13 @@
 package content.area.karamja.tai_bwo_wannai
 
-import content.entity.player.dialogue.*
-import content.entity.player.dialogue.type.*
+import content.entity.player.dialogue.Happy
+import content.entity.player.dialogue.Idle
+import content.entity.player.dialogue.Quiz
+import content.entity.player.dialogue.Sad
+import content.entity.player.dialogue.type.choice
+import content.entity.player.dialogue.type.npc
+import content.entity.player.dialogue.type.player
+import content.entity.player.dialogue.type.startQuest
 import content.quest.quest
 import content.quest.questComplete
 import content.quest.refreshQuestJournal
