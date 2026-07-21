@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Void Dialogue Writer</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --purple: #bc8cff;
+      --green: #3fb950;
+      --yellow: #e3b341;
+      --red: #f85149;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --npc: #79c0ff;
+      --player: #56d364;
+      --choice: #e3b341;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-shrink: 0;
+    }
+
+    h1 { font-size: 15px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+    .settings { display: flex; gap: 12px; align-items: center; flex: 1; flex-wrap: wrap; }
+
+    .field { display: flex; align-items: center; gap: 6px; }
+    .field label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    input[type="text"], select, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 5px 9px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-primary  { background: var(--accent); color: #000; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); font-weight: 400; }
+    .btn-danger   { background: var(--red); color: #fff; }
+    .btn-green    { background: var(--green); color: #fff; }
+    .btn-sm       { padding: 3px 8px; font-size: 12px; }
+
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+
+    /* ── Left panel ── */
+    .left-panel { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); }
+
+    .context-bar {
+      background: rgba(227,179,65,.08);
+      border-bottom: 1px solid rgba(227,179,65,.2);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--choice);
+      flex-shrink: 0;
+    }
+    .context-bar span { flex: 1; }
+
+    .add-form {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px;
+      flex-shrink: 0;
+    }
+
+    .row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+    .row:last-child { margin-bottom: 0; }
+
+    .type-select { width: 90px; flex-shrink: 0; }
+    .expr-select { flex: 1; min-width: 100px; }
+    .text-area   { width: 100%; min-height: 52px; resize: vertical; line-height: 1.4; }
+
+    .pending-opt {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 8px; background: var(--surface2); border-radius: 4px; margin-bottom: 4px;
+      font-size: 12px;
+    }
+    .pending-opt .lbl { flex: 1; font-style: italic; color: var(--choice); }
+
+    .lines-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+
+    /* Line items */
+    .line-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 8px 12px; border-bottom: 1px solid var(--border);
+    }
+    .line-item:hover { background: rgba(255,255,255,.02); }
+
+    .badge {
+      flex-shrink: 0; padding: 2px 6px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+      min-width: 46px; text-align: center; margin-top: 1px;
+    }
+    .badge-npc    { background: rgba(121,192,255,.12); color: var(--npc); }
+    .badge-player { background: rgba(86,211,100,.12);  color: var(--player); }
+    .badge-choice { background: rgba(227,179,65,.12);  color: var(--choice); }
+
+    .line-expr { font-size: 11px; color: var(--purple); white-space: nowrap; flex-shrink: 0; margin-top: 3px; }
+    .line-text { flex: 1; font-size: 13px; line-height: 1.4; word-break: break-word; min-width: 0; }
+    .line-actions { display: flex; gap: 3px; flex-shrink: 0; }
+
+    /* Choice option cards */
+    .choice-options {
+      padding: 6px 12px 6px 28px;
+      background: rgba(227,179,65,.02);
+      border-bottom: 1px solid var(--border);
+    }
+    .opt-card { border: 1px solid rgba(227,179,65,.15); border-radius: 6px; margin-bottom: 6px; overflow: hidden; }
+    .opt-card-hdr {
+      background: rgba(227,179,65,.06); padding: 5px 10px;
+      display: flex; align-items: center; gap: 8px; font-size: 12px;
+    }
+    .opt-card-lbl { flex: 1; font-style: italic; color: var(--choice); }
+    .opt-expr     { font-size: 11px; color: var(--purple); }
+    .opt-sub      { padding: 4px 8px; }
+    .opt-sub-line { display: flex; gap: 6px; align-items: flex-start; padding: 2px 0; font-size: 12px; color: var(--muted); }
+    .opt-empty    { font-size: 11px; color: var(--muted); padding: 4px 8px; font-style: italic; }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 180px; color: var(--muted); gap: 8px; font-size: 13px;
+    }
+    .empty-icon { font-size: 28px; }
+
+    /* ── Right panel ── */
+    .right-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    .code-hdr {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 8px 12px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .code-hdr span { flex: 1; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+
+    .code-out {
+      flex: 1; overflow: auto; padding: 16px;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 12.5px; line-height: 1.65; white-space: pre;
+    }
+
+    .kw  { color: #ff79c6; }
+    .fn  { color: #8be9fd; }
+    .typ { color: #bd93f9; }
+    .str { color: #f1fa8c; }
+    .cmt { color: #6272a4; font-style: italic; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚔ Dialogue Writer</h1>
+  <div class="settings">
+    <div class="field">
+      <label>NPC ID</label>
+      <input type="text" id="npcId" placeholder="almera_baxtorian_falls" style="width:210px" oninput="onNpcIdChange()">
+    </div>
+    <div class="field">
+      <label>Class</label>
+      <input type="text" id="className" placeholder="Almera" style="width:130px" oninput="renderCode()">
+    </div>
+    <div class="field">
+      <label>Package</label>
+      <input type="text" id="pkg" value="content.quest.member" style="width:180px" oninput="renderCode()">
+    </div>
+    <button class="btn-secondary btn-sm" onclick="clearAll()">Clear</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Builder -->
+  <div class="left-panel">
+    <div id="ctxBar" class="context-bar" style="display:none">
+      <span id="ctxLabel"></span>
+      <button class="btn-secondary btn-sm" onclick="exitCtx()">↩ Back</button>
+    </div>
+
+    <div class="add-form">
+      <div class="row">
+        <select id="typeSelect" class="type-select" onchange="onTypeChange()">
+          <option value="npc">NPC</option>
+          <option value="player">Player</option>
+          <option value="choice">Choice</option>
+        </select>
+        <select id="exprSelect" class="expr-select"></select>
+        <button class="btn-primary" onclick="addLine()">Add</button>
+      </div>
+      <div id="textRow">
+        <textarea id="lineText" class="text-area" placeholder="Dialogue text..." onkeydown="textKey(event)"></textarea>
+      </div>
+      <div id="choiceRow" style="display:none">
+        <div id="pendingOpts"></div>
+        <div class="row" style="margin-bottom:0">
+          <input type="text" id="optLabel" placeholder="Option label..." style="flex:1" onkeydown="optKey(event)">
+          <select id="optExpr" style="width:120px"></select>
+          <button class="btn-secondary" onclick="addPendingOpt()">+ Option</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="lines-list" id="linesList"></div>
+  </div>
+
+  <!-- Code -->
+  <div class="right-panel">
+    <div class="code-hdr">
+      <span>Generated Kotlin</span>
+      <button class="btn-secondary btn-sm" onclick="copyCode()">Copy</button>
+      <button class="btn-green btn-sm" onclick="downloadFile()">Download .kt</button>
+    </div>
+    <div class="code-out" id="codeOut"></div>
+  </div>
+</div>
+
+<script>
+const EXPRESSIONS = [
+  'Idle','Neutral','Happy','Sad','Confused','Angry','Frustrated','Scared',
+  'Shock','Disheartened','Quiz','Pleased','Laugh','Cry','Sob','Teary',
+  'Blink','Blinking','Asleep','Drunk','Evil','EvilGrin','EvilLaugh',
+  'Giggles','Hysterics','Cackle','Condescending','Sneer','NoDisgust',
+  'Shifty','Unstable','Mad','No','Yes','Bored','Unamused','Unimpressed',
+  'LookDown','EyesClosedCry','EyesClosedNod','Terrified','Horrified',
+  'Shaking','Admit','Amazed','AngryFadeIn','Chicken','Cursing','Goofy','DoorHead'
+];
+
+let lines = [];
+let pendingOpts = [];
+let editCtx = null; // { choiceId, optionId, label }
+let uid = 0;
+const nextId = () => ++uid;
+
+// ── Init ─────────────────────────────────────────────
+function init() {
+  fillSelect('exprSelect', 'Idle');
+  fillSelect('optExpr', 'Happy');
+  render();
+}
+
+function fillSelect(elId, def) {
+  document.getElementById(elId).innerHTML =
+    EXPRESSIONS.map(e => `<option value="${e}"${e === def ? ' selected' : ''}>${e}</option>`).join('');
+}
+
+// ── Settings ─────────────────────────────────────────
+function onNpcIdChange() {
+  const npcId = document.getElementById('npcId').value.trim();
+  const cls = npcId.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('').replace(/[^a-zA-Z0-9]/g, '');
+  document.getElementById('className').value = cls;
+  renderCode();
+}
+
+// ── Form controls ─────────────────────────────────────
+function onTypeChange() {
+  const t = document.getElementById('typeSelect').value;
+  const isChoice = t === 'choice';
+  document.getElementById('textRow').style.display   = isChoice ? 'none' : '';
+  document.getElementById('choiceRow').style.display = isChoice ? '' : 'none';
+  document.getElementById('exprSelect').style.display = isChoice ? 'none' : '';
+  if (isChoice) { pendingOpts = []; renderPendingOpts(); }
+}
+
+function textKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addLine(); } }
+function optKey(e)  { if (e.key === 'Enter') { e.preventDefault(); addPendingOpt(); } }
+
+function addPendingOpt() {
+  const lbl = document.getElementById('optLabel').value.trim();
+  if (!lbl) return;
+  const expr = document.getElementById('optExpr').value;
+  pendingOpts.push({ id: nextId(), label: lbl, expression: expr, lines: [] });
+  document.getElementById('optLabel').value = '';
+  document.getElementById('optLabel').focus();
+  renderPendingOpts();
+}
+
+function removePendingOpt(pid) {
+  pendingOpts = pendingOpts.filter(o => o.id !== pid);
+  renderPendingOpts();
+}
+
+function renderPendingOpts() {
+  document.getElementById('pendingOpts').innerHTML = pendingOpts.map(o => `
+    <div class="pending-opt">
+      <span style="color:var(--purple);font-size:11px">option&lt;${esc(o.expression)}&gt;</span>
+      <span class="lbl">"${esc(o.label)}"</span>
+      <button class="btn-secondary btn-sm" onclick="removePendingOpt(${o.id})">✕</button>
+    </div>`).join('');
+}
+
+// ── Add line ──────────────────────────────────────────
+function addLine() {
+  const type = document.getElementById('typeSelect').value;
+  let line;
+
+  if (type === 'choice') {
+    if (pendingOpts.length < 2) { alert('Add at least 2 options.'); return; }
+    line = { id: nextId(), type: 'choice', options: pendingOpts.map(o => ({ ...o, lines: [] })) };
+    pendingOpts = [];
+    renderPendingOpts();
+  } else {
+    const text = document.getElementById('lineText').value.trim();
+    if (!text) { document.getElementById('lineText').focus(); return; }
+    line = { id: nextId(), type, expression: document.getElementById('exprSelect').value, text };
+    document.getElementById('lineText').value = '';
+    document.getElementById('lineText').focus();
+  }
+
+  if (editCtx) {
+    const choice = findLine(lines, editCtx.choiceId);
+    const opt = choice && choice.options.find(o => o.id === editCtx.optionId);
+    if (opt) opt.lines.push(line);
+  } else {
+    lines.push(line);
+  }
+  render();
+}
+
+// ── Line management ───────────────────────────────────
+function findLine(arr, lid) {
+  for (const l of arr) {
+    if (l.id === lid) return l;
+    if (l.type === 'choice') for (const o of l.options) { const f = findLine(o.lines, lid); if (f) return f; }
+  }
+  return null;
+}
+
+function removeLine(lid) {
+  lines = filterDeep(lines, lid);
+  if (editCtx && (editCtx.choiceId === lid)) exitCtx();
+  render();
+}
+
+function filterDeep(arr, lid) {
+  return arr.filter(l => {
+    if (l.id === lid) return false;
+    if (l.type === 'choice') l.options.forEach(o => { o.lines = filterDeep(o.lines, lid); });
+    return true;
+  });
+}
+
+function moveLine(lid, dir) { shiftInList(lines, lid, dir); render(); }
+
+function shiftInList(arr, lid, dir) {
+  const i = arr.findIndex(l => l.id === lid);
+  if (i === -1) {
+    for (const l of arr) if (l.type === 'choice') l.options.forEach(o => shiftInList(o.lines, lid, dir));
+    return;
+  }
+  const j = i + dir;
+  if (j >= 0 && j < arr.length) [arr[i], arr[j]] = [arr[j], arr[i]];
+}
+
+function enterCtx(choiceId, optionId, label) { editCtx = { choiceId, optionId, label }; render(); }
+function exitCtx()  { editCtx = null; render(); }
+function clearAll() { if (lines.length && !confirm('Clear all lines?')) return; lines = []; editCtx = null; render(); }
+
+// ── Render ────────────────────────────────────────────
+function render() { renderCtxBar(); renderLines(); renderCode(); }
+
+function renderCtxBar() {
+  const bar = document.getElementById('ctxBar');
+  if (editCtx) {
+    bar.style.display = 'flex';
+    document.getElementById('ctxLabel').textContent = `Adding inside option: "${editCtx.label}"`;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function renderLines() {
+  const el = document.getElementById('linesList');
+  const src = editCtx
+    ? (() => { const c = findLine(lines, editCtx.choiceId); const o = c && c.options.find(x => x.id === editCtx.optionId); return o ? o.lines : []; })()
+    : lines;
+
+  if (!src.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div>${editCtx ? 'No lines in this option yet' : 'Add lines above to begin'}</div></div>`;
+    return;
+  }
+  el.innerHTML = src.map((l, i) => renderItem(l, i, src.length)).join('');
+}
+
+function renderItem(line, idx, total) {
+  const controls = `<div class="line-actions">
+    <button class="btn-secondary btn-sm" onclick="moveLine(${line.id},-1)" ${idx===0?'disabled':''}>↑</button>
+    <button class="btn-secondary btn-sm" onclick="moveLine(${line.id},1)" ${idx===total-1?'disabled':''}>↓</button>
+    <button class="btn-danger btn-sm" onclick="removeLine(${line.id})">✕</button>
+  </div>`;
+
+  if (line.type === 'choice') {
+    const cards = line.options.map(opt => {
+      const subs = opt.lines.length
+        ? opt.lines.map(sl => `<div class="opt-sub-line">
+            <span style="color:${sl.type==='npc'?'var(--npc)':'var(--player)'};font-size:10px;font-weight:700">${sl.type.toUpperCase()}</span>
+            <span style="color:var(--purple);font-size:10px">&lt;${sl.expression}&gt;</span>
+            <span>${esc(sl.text)}</span>
+          </div>`).join('')
+        : `<div class="opt-empty">empty — click "+ Lines" to add dialogue</div>`;
+      return `<div class="opt-card">
+        <div class="opt-card-hdr">
+          <span class="opt-expr">&lt;${esc(opt.expression)}&gt;</span>
+          <span class="opt-card-lbl">"${esc(opt.label)}"</span>
+          <button class="btn-secondary btn-sm" onclick="enterCtx(${line.id},${opt.id},${JSON.stringify(opt.label)})">+ Lines</button>
+        </div>
+        <div class="opt-sub">${subs}</div>
+      </div>`;
+    }).join('');
+    return `<div class="line-item">
+      <span class="badge badge-choice">choice</span>
+      <div style="flex:1;font-size:12px;color:var(--muted)">${line.options.length} options</div>
+      ${controls}
+    </div>
+    <div class="choice-options">${cards}</div>`;
+  }
+
+  const bc = line.type === 'npc' ? 'badge-npc' : 'badge-player';
+  return `<div class="line-item">
+    <span class="badge ${bc}">${line.type.toUpperCase()}</span>
+    <span class="line-expr">&lt;${esc(line.expression)}&gt;</span>
+    <div class="line-text">${esc(line.text)}</div>
+    ${controls}
+  </div>`;
+}
+
+// ── Code generation ───────────────────────────────────
+function getCode() {
+  const npcId = document.getElementById('npcId').value.trim() || 'my_npc';
+  const cls   = document.getElementById('className').value.trim() || 'MyNpc';
+  const pkg   = document.getElementById('pkg').value.trim() || 'content';
+
+  const usedExprs = new Set();
+  collectExprs(lines, usedExprs);
+  const exprImports = [...usedExprs].sort().map(e => `import content.entity.player.dialogue.${e}`).join('\n');
+  const needsChoice = lines.some(l => l.type === 'choice');
+  const hasNpc    = flattenTypes(lines).includes('npc');
+  const hasPlayer = flattenTypes(lines).includes('player');
+
+  const body = codeLines(lines, '        ') || '        // no lines yet';
+
+  return `package ${pkg}
+${hasNpc    ? '\nimport content.entity.player.dialogue.type.npc' : ''}${hasPlayer ? '\nimport content.entity.player.dialogue.type.player' : ''}${needsChoice ? '\nimport content.entity.player.dialogue.type.choice' : ''}
+${exprImports}
+import world.gregs.voidps.engine.Script
+import world.gregs.voidps.engine.entity.character.player.Player
+
+class ${cls} : Script {
+
+    init {
+        npcOperate("Talk-to", "${npcId}") {
+            startDialogue()
+        }
+    }
+
+    suspend fun Player.startDialogue() {
+${body}
+    }
+}`.replace(/\n{3,}/g, '\n\n');
+}
+
+function flattenTypes(arr) {
+  return arr.flatMap(l => l.type === 'choice' ? l.options.flatMap(o => flattenTypes(o.lines)) : [l.type]);
+}
+
+function collectExprs(arr, set) {
+  for (const l of arr) {
+    if (l.expression) set.add(l.expression);
+    if (l.type === 'choice') l.options.forEach(o => { set.add(o.expression); collectExprs(o.lines, set); });
+  }
+}
+
+function codeLines(arr, indent) {
+  return arr.map(l => codeLine(l, indent)).join('\n');
+}
+
+function codeLine(line, indent) {
+  if (line.type === 'npc')    return `${indent}npc<${line.expression}>("${escStr(line.text)}")`;
+  if (line.type === 'player') return `${indent}player<${line.expression}>("${escStr(line.text)}")`;
+  if (line.type === 'choice') {
+    const opts = line.options.map(opt => {
+      const body = opt.lines.length
+        ? '\n' + codeLines(opt.lines, indent + '            ') + '\n' + indent + '        '
+        : '';
+      return `${indent}    option<${opt.expression}>("${escStr(opt.label)}") {${body}}`;
+    }).join('\n');
+    return `${indent}choice {\n${opts}\n${indent}}`;
+  }
+  return '';
+}
+
+// ── Output ────────────────────────────────────────────
+function renderCode() {
+  document.getElementById('codeOut').innerHTML = highlight(getCode());
+}
+
+function highlight(code) {
+  return code
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\b(package|import|class|fun|suspend|init|return)\b/g,'<span class="kw">$1</span>')
+    .replace(/\b(Player|Script)\b/g,'<span class="typ">$1</span>')
+    .replace(/(npc|player|choice|option|npcOperate)(?=&lt;|\(|\s*\{)/g,'<span class="fn">$1</span>')
+    .replace(/("(?:[^"\\]|\\.)*")/g,'<span class="str">$1</span>')
+    .replace(/(\/\/[^\n]*)/g,'<span class="cmt">$1</span>');
+}
+
+function copyCode() {
+  navigator.clipboard.writeText(getCode()).then(() => {
+    const b = document.querySelector('.code-hdr .btn-secondary');
+    b.textContent = 'Copied!';
+    setTimeout(() => b.textContent = 'Copy', 1500);
+  });
+}
+
+function downloadFile() {
+  const cls = document.getElementById('className').value.trim() || 'MyNpc';
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([getCode()], { type: 'text/plain' })),
+    download: `${cls}.kt`
+  });
+  a.click();
+}
+
+// ── Helpers ───────────────────────────────────────────
+function esc(s)    { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escStr(s) { return String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"'); }
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+[marshy_jungle_vine]
+id = 2575
+examine = "A marshy jungle vine."
+
+[marshy_jungle_vine_picked]
+id = 2576
+examine = "A marshy jungle vine."
+
+[palm_tree_ardrigal]
+id = 2577
+examine = "A tropical palm tree."
+
+[palm_tree_ardrigal_picked]
+id = 2578
+examine = "A tropical palm tree."
+
+[scorched_earth]
+id = 2579
+examine = "The earth here looks scorched."
+
+[scorched_earth_picked]
+id = 2580
+examine = "The earth here looks scorched."
+
+[volencia_moss_rocks]
+id = 2581
+examine = "These rocks look unusual."
+
+[volencia_moss_rocks_picked]
+id = 2582
+examine = "These rocks look unusual."
+
+[fungus_covered_cavern_wall]
+id = 2583
+examine = "The wall is covered in a strange fungus."
+
+[fungus_pattern]
+id = 2584
+examine = "The remains of some fungus."

@@ -1,0 +1,75 @@
+[baxtorian_falls_raft]
+id = 1987
+examine = "A raft moored by the riverbank."
+
+[baxtorian_falls_rock]
+id = 1996
+examine = "A rocky island by the waterfall."
+
+[hadleys_bookcase]
+id = 380
+examine = "A bookcase full of books about the local area."
+
+[gnome_dungeon_bookcase]
+id = 1989
+examine = "A bookcase in the dungeon."
+
+[gnome_dungeon_crate]
+id = 1990
+examine = "A crate."
+
+[gnome_dungeon_gate]
+id = 1991
+examine = "A barred gate."
+
+[glarials_tombstone]
+id = 1992
+examine = "A tombstone dedicated to Glarial, wife of Baxtorian."
+
+[glarials_tomb_chest]
+id = 33046
+examine = "A chest."
+
+[glarials_coffin]
+id = 33066
+examine = "The ornate coffin of Glarial."
+
+[glarials_tomb_crate]
+id = 2857
+examine = "A crate."
+
+[glarials_tomb_bookcase]
+id = 2855
+examine = "A bookcase in the tomb."
+
+[glarials_tomb_ladder]
+id = 1757
+examine = "A ladder leading back to the surface."
+
+[waterfall_cave_entrance]
+id = 37246
+examine = "The entrance to the waterfall dungeon."
+
+[baxtorian_falls_dead_tree]
+id = 2020
+examine = "A dead tree overhanging the waterfall."
+
+[waterfall_dungeon_crate]
+id = 1999
+examine = "A crate in the dungeon."
+
+[waterfall_dungeon_door]
+id = 2002
+examine = "A stone door engraved with elvish runes."
+
+[baxtorian_rune_pedestal]
+id = 2004
+examine = "A stone pedestal engraved with elemental symbols."
+
+[baxtorian_statue]
+id = 2006
+examine = "A stone statue of Glarial."
+
+[baxtorian_chalice]
+id = 2014
+examine = "The chalice of Baxtorian."

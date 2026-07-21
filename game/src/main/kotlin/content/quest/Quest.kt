@@ -28,6 +28,8 @@ val quests = setOf(
     "priest_in_peril",
     "lost_city",
     "tears_of_guthix",
+    "waterfall_quest",
+    "jungle_potion",
     "zogre_flesh_eaters",
     // mini-quests
     "enter_the_abyss",

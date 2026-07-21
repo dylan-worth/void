@@ -82,4 +82,24 @@ name = "wergali"
 [.grimy_spirit_weed]
 level = 35
 xp = 78
+
+[.grimy_snake_weed]
+level = 3
+xp = 25
+
+[.grimy_ardrigal]
+level = 3
+xp = 25
+
+[.grimy_sito_foil]
+level = 3
+xp = 25
+
+[.grimy_volencia_moss]
+level = 3
+xp = 25
+
+[.grimy_rogues_purse]
+level = 3
+xp = 25
 name = "spirit weed"
