@@ -1,6 +1,6 @@
 package content.area.morytania.mort_myre_swamp
 
-import content.entity.combat.hit.hit
+import content.entity.combat.hit.directHit
 import world.gregs.voidps.engine.Script
 import world.gregs.voidps.engine.client.message
 import world.gregs.voidps.engine.data.definition.Areas
@@ -39,11 +39,22 @@ class SwampDecay : Script {
 
         timerTick("swamp_decay") {
             if (inventory.any(immunity) || equipment.any(immunity)) {
+                if (equipment.contains("silver_sickle_b")) {
+                    message("The blessed sickle prevents the swamp from decaying you.")
+                }
+                gfx("druidicspirit_druidsshield", delay = 30)
                 return@timerTick Timer.CONTINUE
             }
+
+            if (tile in Areas["filliman_grotto"]) {
+                message("The aura of Fillimans camp protects you from the swamp.")
+                gfx("druidicspirit_druidsshield", delay = 30)
+                return@timerTick Timer.CONTINUE
+            }
+
             if (tile in Areas["mort_myre_swamp"]) {
                 message("The swamp decays you!")
-                hit(this, weapon = Item.EMPTY, spell = "", special = false, offensiveType = "damage", damage = random.nextInt(10..30))
+                directHit(damage = random.nextInt(10..30))
                 gfx("swamp_decay")
                 Timer.CONTINUE
             } else {

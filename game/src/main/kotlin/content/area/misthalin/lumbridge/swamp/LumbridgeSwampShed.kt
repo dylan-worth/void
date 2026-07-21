@@ -16,7 +16,7 @@ import world.gregs.voidps.engine.event.AuditLog
 import world.gregs.voidps.engine.inv.add
 import world.gregs.voidps.engine.inv.carriesItem
 import world.gregs.voidps.engine.inv.inventory
-import world.gregs.voidps.engine.queue.softQueue
+import world.gregs.voidps.engine.queue.longQueue
 import world.gregs.voidps.network.login.protocol.visual.update.player.EquipSlot
 import world.gregs.voidps.type.Tile
 
@@ -24,7 +24,7 @@ class LumbridgeSwampShed : Script {
     init {
         objectOperate("Open", "zanaris_door_closed") { (target) ->
             val stage = quest("lost_city")
-            val enter = equipped(EquipSlot.Weapon).id == "dramen_staff" && (stage == "spirit_killed" || stage == "enter_shed" || stage == "completed")
+            val enter = equipped(EquipSlot.Weapon).id == "dramen_staff" && (stage == "crafted_staff" || stage == "completed")
             if (enter) {
                 message("The world starts to shimmer...", type = ChatType.Game)
             }
@@ -69,7 +69,7 @@ class LumbridgeSwampShed : Script {
 
         teleportLand("fairy") {
             val stage = quest("lost_city")
-            if (stage == "spirit_killed" || stage == "enter_shed") {
+            if (stage == "crafted_staff") {
                 questComplete()
             }
         }
@@ -81,7 +81,7 @@ class LumbridgeSwampShed : Script {
         jingle("quest_complete_1")
         refreshQuestJournal()
         inc("quest_points", 3)
-        softQueue("quest_complete", 1) {
+        longQueue("quest_complete", 1) {
             message("Congratulations, Quest complete!")
             questComplete(
                 "Lost City",

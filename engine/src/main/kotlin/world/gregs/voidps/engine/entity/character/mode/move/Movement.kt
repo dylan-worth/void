@@ -45,7 +45,10 @@ open class Movement(
             return
         }
         val tile = strategy.destination(character)
-        if (character is Player && !tile.noCollision) {
+        // Players, and owned familiars (which a player directs around the map), use full
+        // pathfinding so they route around obstacles. Other NPCs use cheap single-step movement.
+        val pathfinds = character is Player || (character is NPC && character["owner_index", -1] != -1)
+        if (pathfinds && !tile.noCollision) {
             val route = pathFinder.findPath(character, strategy, shape)
             character.steps.queueRoute(route, tile, tile.noCollision, tile.noRun)
         } else if (tile != Tile.EMPTY) {
@@ -59,17 +62,24 @@ open class Movement(
      */
     protected open fun stepOut(): Boolean {
         val strategy = strategy ?: return false
-        if (strategy.shape != -2) return false
+        if (strategy.shape != -2) {
+            return false
+        }
         val npc = character as? NPC ?: return false
-        if (npc.def["allowed_under", false]) return false
-        if (!Overlap.isUnder(npc.tile, npc.size, npc.size, strategy.tile, strategy.width, strategy.height)) return false
+        if (npc.def["allowed_under", false]) {
+            return false
+        }
+        if (!Overlap.isUnder(npc.tile, npc.size, npc.size, strategy.tile, strategy.width, strategy.height)) {
+            return false
+        }
         clearSteps()
-        if (shouldQueueStepOut()) {
-            for (direction in Direction.cardinal.shuffled(random)) {
-                if (canStep(direction.delta.x, direction.delta.y)) {
-                    character.steps.queueStep(npc.tile.add(direction))
-                    break
-                }
+        if (!shouldQueueStepOut()) {
+            return true
+        }
+        for (direction in Direction.cardinal.shuffled(random)) {
+            if (canStep(direction.delta.x, direction.delta.y)) {
+                character.steps.queueStep(npc.tile.add(direction))
+                break
             }
         }
         return true
@@ -85,11 +95,15 @@ open class Movement(
         if (character is Player && character.viewport?.loaded == false) {
             return
         }
-        if (hasDelay() && !canMove() && !character.steps.destination.noCollision) {
+        if (!canMove()) {
             return
         }
         if (!stepOut()) {
             calculate()
+        }
+        if (character is NPC && character.walkTrigger != null && character.suspension != null) {
+            character.walkTrigger?.invoke()
+            character.walkTrigger = null
         }
         if (step(runStep = false) && character.running) {
             if (character.steps.isNotEmpty()) {
@@ -101,16 +115,15 @@ open class Movement(
     }
 
     private fun canMove(): Boolean {
-        if (!hasDelay() && (character as? Player)?.menu == null) {
-            return true
+        if (character.hasClock("movement_delay")) {
+            return false
         }
-        if (character.queue.isEmpty()) {
-            return true
+        if (character.contains("delay")) {
+            // Inactive delays block movement unless there's a queue in action
+            return character.suspension != null || !character.queue.isEmpty() || character.steps.destination.noCollision
         }
-        return character.delay != null
+        return true
     }
-
-    private fun hasDelay() = character.hasClock("movement_delay") || character.contains("delay")
 
     /**
      * Applies one step

@@ -38,13 +38,13 @@ class GrottoTest : WorldTest() {
     @Test
     fun `Fail jump bridge south`() {
         setRandom(object : FakeRandom() {
-            override fun nextBits(bitCount: Int): Int = 255
+            override fun nextInt(until: Int) = until - 1
         })
         val player = createPlayer(Tile(3441, 3331))
         val bridge = GameObjects.find(Tile(3441, 3331), "grotto_bridge")
 
         player.objectOption(bridge, "Jump")
-        tick(6)
+        tick(8)
 
         assertEquals(Tile(3438, 3328), player.tile)
         assertTrue(player.levels.get(Skill.Constitution) < 100)
@@ -53,13 +53,13 @@ class GrottoTest : WorldTest() {
     @Test
     fun `Fail bridge jump north`() {
         setRandom(object : FakeRandom() {
-            override fun nextBits(bitCount: Int): Int = 255
+            override fun nextInt(until: Int) = until - 1
         })
         val player = createPlayer(Tile(3440, 3329))
         val bridge = GameObjects.find(Tile(3440, 3329), "grotto_bridge")
 
         player.objectOption(bridge, "Jump")
-        tick(6)
+        tick(8)
 
         assertEquals(Tile(3438, 3332), player.tile)
         assertTrue(player.levels.get(Skill.Constitution) < 100)

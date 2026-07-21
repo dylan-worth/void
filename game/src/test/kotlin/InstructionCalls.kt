@@ -18,8 +18,7 @@ import world.gregs.voidps.engine.entity.obj.GameObject
 import world.gregs.voidps.engine.get
 import world.gregs.voidps.engine.inv.Inventory
 import world.gregs.voidps.engine.inv.inventory
-import world.gregs.voidps.engine.suspend.IntSuspension
-import world.gregs.voidps.engine.suspend.StringSuspension
+import world.gregs.voidps.engine.suspend.Suspension
 import world.gregs.voidps.network.client.instruction.*
 import world.gregs.voidps.type.Tile
 
@@ -174,7 +173,20 @@ fun Player.interfaceUse(
     toSlot: Int = -1,
 ) {
     Assertions.assertTrue(hasOpen(id)) { "Player $this doesn't have interface $id open" }
-    InterfaceApi.itemOnItem(this, fromItem, toItem, fromSlot, toSlot)
+    runTest {
+        instructions.trySend(
+            InteractInterfaceItem(
+                fromItem = fromItem.def.id,
+                toItem = toItem.def.id,
+                fromSlot = fromSlot,
+                toSlot = toSlot,
+                fromInterfaceId = 149,
+                fromComponentId = 0,
+                toInterfaceId = 149,
+                toComponentId = 0,
+            ),
+        )
+    }
 }
 
 fun Player.interfaceSwitch(
@@ -197,10 +209,13 @@ fun Player.equipItem(
 
 fun Player.dialogueOption(
     component: String,
-    option: Int = -1,
     id: String = dialogue ?: error("No dialogue found for $this."),
 ) {
     Dialogues.continueDialogue(this, "$id:$component")
+}
+
+fun Player.dialogueOption(option: Int) {
+    dialogueOption("line$option")
 }
 
 private fun isContinuableDialogue(id: String) = id.startsWith("dialogue_chat") || id.startsWith("dialogue_npc_chat") || id.startsWith("dialogue_message") || id.startsWith("dialogue_obj") || id.startsWith("dialogue_double_obj")
@@ -212,7 +227,8 @@ fun Player.dialogueContinue(repeat: Int = 1) {
     }
 }
 
-fun Player.dialogueContinues() {
+fun Player.skipDialogues() {
+    requireNotNull(dialogue) { "No dialogue found for $this." }
     while (dialogue != null && isContinuableDialogue(dialogue!!)) {
         dialogueOption("continue")
     }
@@ -258,12 +274,30 @@ fun Player.itemOnNpc(npc: NPC, itemSlot: Int, inventory: String = "inventory") {
     interactItemOn(npc, inventory, inventory, item, itemSlot)
 }
 
+fun Player.itemOnFloorItem(floorItem: FloorItem, itemSlot: Int, inventory: String = "inventory") {
+    val item = inventories.inventory(inventory)[itemSlot]
+    interactItemOn(floorItem, inventory, inventory, item, itemSlot)
+}
+
 fun Player.itemOnItem(
     firstSlot: Int,
     secondSlot: Int,
 ) {
     val inv = inventories.inventory("inventory")
-    InterfaceApi.itemOnItem(this, inv[firstSlot], inv[secondSlot], firstSlot, secondSlot)
+    runTest {
+        instructions.send(
+            InteractInterfaceItem(
+                fromItem = inv[firstSlot].def.id,
+                toItem = inv[secondSlot].def.id,
+                fromSlot = firstSlot,
+                toSlot = secondSlot,
+                fromInterfaceId = 149,
+                fromComponentId = 0,
+                toInterfaceId = 149,
+                toComponentId = 0,
+            ),
+        )
+    }
 }
 
 fun Player.npcOption(npc: NPC, option: String) {
@@ -292,11 +326,11 @@ fun Player.floorItemOption(floorItem: FloorItem, option: String) = runTest {
 fun Inventory.set(index: Int, id: String, amount: Int = 1) = transaction { set(index, Item(id, amount)) }
 
 fun Player.intEntry(int: Int) {
-    (dialogueSuspension as? IntSuspension)?.resume(int)
+    (suspension as? Suspension.IntEntry)?.resume(int)
 }
 
 fun Player.stringEntry(string: String) {
-    (dialogueSuspension as? StringSuspension)?.resume(string)
+    (suspension as? Suspension.StringEntry)?.resume(string)
 }
 
 fun Player.containsMessage(message: String) = messages.any { it.contains(message) }

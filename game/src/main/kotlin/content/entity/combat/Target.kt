@@ -6,8 +6,8 @@ import content.area.wilderness.inSingleCombat
 import content.area.wilderness.inWilderness
 import content.entity.combat.hit.Hit
 import content.entity.combat.hit.directHit
-import content.entity.effect.transform
 import content.entity.player.equip.Equipment
+import content.skill.magic.spell.spell
 import content.skill.melee.weapon.combatStyle
 import content.skill.ranged.ammo
 import content.skill.slayer.categories
@@ -31,7 +31,7 @@ import world.gregs.voidps.engine.entity.item.Item
 import world.gregs.voidps.network.login.protocol.visual.update.player.EquipSlot
 
 object Target {
-    fun attackable(source: Character, target: Character): Boolean {
+    fun attackable(source: Character, target: Character, message: Boolean = true): Boolean {
         if (target is NPC) {
             if (target.id.startsWith("door_support") && NPCDefinitions.get(target.id).options[1] == "Destroy") {
                 return true
@@ -39,11 +39,27 @@ object Target {
             if (source is Player && !CombatApi.canAttack(source, target)) {
                 return false
             }
-            if (target.transform != "") {
-                if (!NPCDefinitions.get(target.transform).options.contains("Attack")) {
+            if (source is Player && target["owner_index", -1] == source.index) {
+                if (message) source.message("You can't attack your own familiar.")
+                return false
+            }
+            if (source is Player && target.contains("owner")) {
+                val owner = target.get<String>("owner")
+                if (source.accountName != owner) {
+                    source.message("Someone else is fighting that.")
                     return false
                 }
-            } else if (target.def.options[1] != "Attack") {
+            }
+            if ((source.spell == "bind" || source.spell == "snare" || source.spell == "entangle") && target.id.endsWith("_impling")) {
+                return true
+            }
+            if (source is Player) {
+                if (!target.def(source).options.contains("Attack")) {
+                    return false
+                }
+            } else if (target["owner_index", -1] == -1 && !target.def.options.contains("Attack")) {
+                // A familiar's base form deliberately has no "Attack" option (its owner can't click
+                // it) yet npcs must still fight back against one - combat() re-validates every tick.
                 return false
             }
             if (target.mode == PauseMode) {
@@ -64,18 +80,20 @@ object Target {
         }
         if (source is Player && target is Player) {
             if (!source.inPvp && !source.inWilderness) {
-                source.message("You can only attack players in a player-vs-player area.")
+                if (message) source.message("You can only attack players in a player-vs-player area.")
                 return false
             }
             if (!target.inPvp && !target.inWilderness) {
-                source.message("That player is not in the wilderness.")
+                if (message) source.message("That player is not in the wilderness.")
                 return false
             }
             if (target.inWilderness) {
                 val range = Wilderness.combatRange(source)
                 if (target.combatLevel !in range) {
-                    source.message("Your level difference is too great!")
-                    source.message("You need to move deeper into the Wilderness.")
+                    if (message) {
+                        source.message("Your level difference is too great!")
+                        source.message("You need to move deeper into the Wilderness.")
+                    }
                     return false
                 }
             }
@@ -85,16 +103,18 @@ object Target {
         }
         // If the target I'm trying to attack is already in combat and I am not the attacker
         if (target.inSingleCombat && target.underAttack && target.attacker != source) {
-            if (target is NPC) {
-                (source as? Player)?.message("Someone else is fighting that.")
-            } else {
-                (source as? Player)?.message("That player is already under attack.")
+            if (message) {
+                if (target is NPC) {
+                    (source as? Player)?.message("Someone else is fighting that.")
+                } else {
+                    (source as? Player)?.message("That player is already under attack.")
+                }
             }
             return false
         }
         // If I am already in combat and my attempted target is not my attacker
         if (source.inSingleCombat && source.underAttack && source.attacker != target) {
-            (source as? Player)?.message("You are already in combat.")
+            if (message) (source as? Player)?.message("You are already in combat.")
             return false
         }
         // PVP area, slayer requirements, in combat etc..
@@ -164,6 +184,8 @@ object Target {
         is NPC if target.id == "harpie_bug_swarm" && source is Player && source.equipped(EquipSlot.Shield).id != "lit_bug_lantern" -> 0
         is NPC if target.def.contains("damage_cap") -> damage.coerceAtMost(target.def["damage_cap"])
         is NPC if target.def.contains("immune_death") -> damage.coerceAtMost(target.levels.get(Skill.Constitution) - 10)
+        is NPC if target.id.endsWith("_impling") -> 0
+        is NPC if (target.id == "spined_larupia" || target.id == "horned_graahk" || target.id == "sabre_toothed_kyatt") -> 0
         else -> damage
     }
 }

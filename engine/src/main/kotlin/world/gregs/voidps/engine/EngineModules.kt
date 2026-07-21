@@ -33,7 +33,8 @@ fun engineModule(files: ConfigFiles) = module {
     single {
         SaveQueue(get(), SafeStorage(File(Settings["storage.players.errors"])))
     }
-    single { AccountManager(get(), get(), get(), AppearanceOverrides()) }
+    single { AccountManager(get(), get(), get(), AppearanceOverrides().apply { load() }) }
+    single { AccountDefinitionsReloader(get(), get(), get()) }
     // IO
     single { PlayerAccountLoader(get(), get(), get(), get(), get(), Contexts.Game) }
     // Map
@@ -56,7 +57,6 @@ fun engineModule(files: ConfigFiles) = module {
     single(createdAtStart = true) { RenderEmoteDefinitions().load(files.find(Settings["definitions.renderEmotes"])) }
     single(createdAtStart = true) { MidiDefinitions().load(files.list(Settings["definitions.midis"])) }
     single(createdAtStart = true) { JingleDefinitions().load(files.list(Settings["definitions.jingles"])) }
-    single(createdAtStart = true) { SpellDefinitions().load(files.find(Settings["definitions.spells"])) }
     single(createdAtStart = true) { PatrolDefinitions().load(files.list(Settings["definitions.patrols"])) }
     single(createdAtStart = true) { PrayerDefinitions().load(files.find(Settings["definitions.prayers"])) }
     single(createdAtStart = true) {

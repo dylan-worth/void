@@ -4,3 +4,4 @@ persist = true
 format = "map"
 default = "unstarted"
 values = { unstarted = 0, started = 1, snake_weed = 2, ardrigal = 3, sito_foil = 4, volencia_moss = 5, completed = 12 }
+values = { unstarted = 0, completed = 12 }

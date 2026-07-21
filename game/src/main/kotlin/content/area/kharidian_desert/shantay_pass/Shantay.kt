@@ -1,6 +1,7 @@
 package content.area.kharidian_desert.shantay_pass
 
 import content.entity.obj.door.openDoor
+import content.entity.player.bank.pin.openBank
 import content.entity.player.dialogue.Neutral
 import content.entity.player.dialogue.type.ChoiceOption
 import content.entity.player.dialogue.type.choice
@@ -118,7 +119,7 @@ class Shantay : Script {
                     choice {
                         option<Neutral>("I'll pay the fine.") {
                             npc<Neutral>("Okay then..., you'll need access to your bank.")
-                            open("bank")
+                            openBank()
                         }
                         option<Neutral>("No thanks, you're not having my money.") {
                             npc<Neutral>("Very well, I grow tired of you, you'll be taken to a new jail in Port Sarim.")
@@ -164,7 +165,7 @@ class Shantay : Script {
         }
         when (inventory.transaction.error) {
             is TransactionError.Full -> npc<Neutral>("Sorry friend, you'll need more inventory space to buy a pass.")
-            TransactionError.None -> item("shantay_pass", 400, "You purchase a Shantay Pass.")
+            TransactionError.None -> item("shantay_pass", "You purchase a Shantay Pass.")
             else -> npc<Neutral>("Sorry friend, the Shantay Pass is 5 gold coins. You don't seem to have enough money!")
         }
     }

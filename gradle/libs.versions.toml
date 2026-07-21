@@ -1,6 +1,6 @@
 [versions]
 cacheVersion = "1.3.1"
-kotlin = "2.2.20"
+kotlin = "2.4.0"
 junit = "5.13.4"
 ktor = "3.2.3"
 displeeCache = "7.1.7"
@@ -23,10 +23,13 @@ embeddedPostgres = "2.1.0"
 lzma = "1.3"
 shadow = "9.1.0"
 spotless = "7.0.4"
+# Tooling
+composeHotReload = "1.1.1"
+compose = "1.11.1"
+material3 = "1.12.0-alpha03"
 
 [libraries]
 kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-kotlin-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinCoroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinCoroutines" }
 kotlinx-io = { module = "org.jetbrains.kotlinx:kotlinx-io-jvm", version.ref = "kotlinIo" }
@@ -59,6 +62,17 @@ embedded-postgres = { module = "io.zonky.test:embedded-postgres", version.ref = 
 kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "shadow" }
 spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
+compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
+compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
+compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose" }
+compose-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose" }
+compose-windows = { module = "org.jetbrains.compose.desktop:desktop-jvm-windows-x64", version.ref = "compose" }
+compose-linux = { module = "org.jetbrains.compose.desktop:desktop-jvm-linux-x64", version.ref = "compose" }
+compose-mac-intel = { module = "org.jetbrains.compose.desktop:desktop-jvm-macos-x64", version.ref = "compose" }
+compose-mac-arm = { module = "org.jetbrains.compose.desktop:desktop-jvm-macos-arm64", version.ref = "compose" }
 
 [bundles]
 testing = ["junit-params", "mockk", "kotlinx-coroutines-test", "koin-test"]
@@ -66,8 +80,13 @@ kotlinx = ["kotlinx-io", "kotlinx-coroutines"]
 logging = ["koin-log", "logback", "inline-logging"]
 postgres = ["testcontainers", "testcontainers-junit", "testcontainers-postgresql", "embedded-postgres"]
 database = ["exposed", "exposed-jdbc", "postgresql", "hikari"]
+compose = ["compose-runtime", "compose-foundation", "compose-material3", "compose-ui", "compose-components-resources", "compose-uiToolingPreview", "compose-resources"]
+compose-release = ["compose-windows", "compose-linux", "compose-mac-intel", "compose-mac-arm"]
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
 jacoco-aggregation = { id = "jacoco-report-aggregation" }
+composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
+compose = { id = "org.jetbrains.compose", version.ref = "compose" }
+composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

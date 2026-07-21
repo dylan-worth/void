@@ -29,10 +29,10 @@ data class ConfigFiles(
     }
 }
 
-fun configFiles(): ConfigFiles {
+fun configFiles(path: String = Settings["storage.data"], temp: String = Settings["storage.data.modified"], cachePath: String = Settings["storage.cache.path"]): ConfigFiles {
     val map = Object2ObjectOpenHashMap<String, MutableList<String>>()
-    val data = Path.of(Settings["storage.data"])
-    val modified = Path.of(Settings["storage.data.modified"])
+    val data = Path.of(path)
+    val modified = Path.of(temp)
     modified.createParentDirectories()
     val lastUpdated = loadLastUpdate(modified)
     val extensions = mutableSetOf<String>()
@@ -43,7 +43,7 @@ fun configFiles(): ConfigFiles {
         }
         map.size
     }
-    return ConfigFiles(map, cacheChanged(lastUpdated), extensions)
+    return ConfigFiles(map, cacheChanged(lastUpdated, Path.of(cachePath)), extensions)
 }
 
 private fun loadLastUpdate(path: Path): Long {

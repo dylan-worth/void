@@ -86,18 +86,21 @@ open class Interact(
             return
         }
         updateRange = false
-        val target = target
         if (stepOut()) {
             super.tick()
             return
         }
         calculate()
+        character.walkTrigger()
         val interacted = processInteraction()
-        if (interacted && interactionFinished()) {
+        // A launched interaction that has finished is complete even if it couldn't re-interact
+        // this tick (e.g. the target object was replaced, changing collision so reached() now
+        // fails) - clear it instead of falling through to cantReach().
+        if ((interacted || launched) && interactionFinished()) {
             clear()
             return
         }
-        if (character.hasClock("movement_delay") || character.visuals.moved || arrived(approachRange ?: -1) || character.suspension != null || character.delay != null) {
+        if (character.hasClock("movement_delay") || character.visuals.moved || arrived(approachRange ?: -1) || character.suspension != null) {
             return
         }
         character.cantReach()

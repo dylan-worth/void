@@ -12,13 +12,14 @@ import world.gregs.voidps.engine.client.ui.open
 import world.gregs.voidps.engine.entity.character.move.tele
 import world.gregs.voidps.engine.entity.character.npc.NPCs
 import world.gregs.voidps.engine.entity.character.player.Player
+import world.gregs.voidps.engine.entity.item.floor.FloorItems
 import world.gregs.voidps.engine.entity.obj.GameObjects
 import world.gregs.voidps.engine.get
 import world.gregs.voidps.engine.map.collision.Collisions
 import world.gregs.voidps.engine.map.collision.clear
 import world.gregs.voidps.engine.map.instance.Instances
 import world.gregs.voidps.engine.map.zone.DynamicZones
-import world.gregs.voidps.engine.queue.LogoutBehaviour
+import world.gregs.voidps.engine.queue.longQueue
 import world.gregs.voidps.engine.queue.queue
 import world.gregs.voidps.type.Delta
 import world.gregs.voidps.type.Region
@@ -44,7 +45,13 @@ class Cutscene(
     }
 
     fun onEnd(destroyInstance: Boolean = true, block: suspend () -> Unit) {
-        player.queue("${name}_cutscene_end", 1, LogoutBehaviour.Accelerate) {
+        player.walkTrigger = {
+            player.queue.clear("${name}_cutscene_end")
+            player.queue("${name}_cutscene_end") {
+                end(destroyInstance)
+            }
+        }
+        player.longQueue("${name}_cutscene_end", Int.MAX_VALUE) {
             end(destroyInstance)
         }
         this@Cutscene.block = block
@@ -98,12 +105,13 @@ class Cutscene(
     }
 }
 
-fun Player.smallInstance(region: Region? = null, levels: Int = 4): Region {
+fun Player.smallInstance(region: Region? = null, levels: Int = 4, logout: Boolean = true): Region {
     val instance = Instances.small()
     if (region != null) {
         get<DynamicZones>().copy(region, instance, levels)
         set("instance_offset", instance.offset(region).id)
     }
+    set("instance_logout", logout)
     set("instance", instance.id)
     return instance
 }
@@ -125,7 +133,7 @@ fun Player.instanceOffset(): Delta {
 }
 
 fun Player.setInstanceLogout(tile: Tile) {
-    set("instance_logout", tile.id)
+    set("instance_logout_tile", tile.id)
 }
 
 fun Player.exitInstance() {
@@ -138,7 +146,7 @@ fun Player.exitInstance() {
 fun Player.instanceOrigin(): Tile = instanceLogout() ?: tile.minus(instanceOffset())
 
 fun Player.instanceLogout(): Tile? {
-    val logout: Int = get("instance_logout") ?: return null
+    val logout: Int = get("instance_logout_tile") ?: return null
     return Tile(logout)
 }
 
@@ -153,9 +161,16 @@ fun Player.clearInstance(): Boolean {
     val region = Region(id)
     Instances.free(region)
     get<DynamicZones>().clear(region)
-    val regionLevel = Region(id).toLevel(0)
-    NPCs.clear(regionLevel)
-    for (zone in regionLevel.toCuboid().toZones()) {
+    // clears all region levels
+    for (level in 0..3) {
+        NPCs.clear(Region(id).toLevel(level))
+    }
+    val cuboid = Region(id).toCuboid() // Region.toCuboid() already defaults to levels=4
+    for (zone in cuboid.toZones()) {
+        // Floor items too, or they'd linger and resurface when the instance is reused.
+        for (item in FloorItems.at(zone).flatten()) {
+            FloorItems.remove(item)
+        }
         GameObjects.clear(zone)
         Collisions.clear(zone)
     }

@@ -61,6 +61,9 @@ actions = [
     { interface = { option = "Autocast", id = "modern_spellbook:wind_strike", success = { variable = { id = "autocast", min = 0, default = -1 } } } },
     { npc = { option = "Attack", id = "magic_dummy", success = { inventory = { id = "empty", min = 28 } } } }
 ]
+reactive = [
+    { eat = { heal_percent = 20 } }
+]
 produces = [
     { skill = "magic" }
 ]
@@ -78,6 +81,9 @@ actions = [
     { interface = { option = "Select", id = "combat_styles:style1" } },
     { npc = { option = "Attack", id = "melee_dummy", success = { skill = { id = "attack", min = 5 } } } }
 ]
+reactive = [
+    { eat = { heal_percent = 20 } }
+]
 produces = [
     { skill = "attack" }
 ]
@@ -94,6 +100,9 @@ setup = [
 actions = [
     { interface = { option = "Select", id = "combat_styles:style2" } },
     { npc = { option = "Attack", id = "melee_dummy", success = { skill = { id = "strength", min = 5 } } } }
+]
+reactive = [
+    { eat = { heal_percent = 20 } }
 ]
 produces = [
     { skill = "strength" }
@@ -121,7 +130,7 @@ produces = [
 [lumbridge_pickpocketing]
 template = "pickpocketting_template"
 capacity = 2
-fields = { location = "lumbridge_thieving_area", npc = "lumbridge_man*,lumbridge_woman*" }
+fields = { location = "lumbridge_thieving_area", npc = "lumbridge_man*,lumbridge_woman*", min_hp = 20 }
 requires = [
     { skill = { id = "thieving", min = 1, max = 10 } }
 ]

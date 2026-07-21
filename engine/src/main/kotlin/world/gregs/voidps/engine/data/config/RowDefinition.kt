@@ -19,6 +19,10 @@ data class RowDefinition(
 
     fun int(column: String) = Tables.int("${stringId}.$column")
 
+    fun skill(column: String) = Tables.skill("${stringId}.$column")
+
+    fun skillOrNull(column: String) = Tables.skillOrNull("${stringId}.$column")
+
     fun skillPair(column: String) = Tables.skillPair("${stringId}.$column")
 
     fun skillPairOrNull(column: String) = Tables.skillPairOrNull("${stringId}.$column")
@@ -30,6 +34,10 @@ data class RowDefinition(
     fun npc(column: String) = Tables.npc("${stringId}.$column")
 
     fun npcOrNull(column: String) = Tables.npcOrNull("${stringId}.$column")
+
+    fun boolList(column: String) = Tables.boolList("${stringId}.$column")
+
+    fun boolListOrNull(column: String) = Tables.boolListOrNull("${stringId}.$column")
 
     fun intList(column: String) = Tables.intList("${stringId}.$column")
 
@@ -47,6 +55,18 @@ data class RowDefinition(
 
     fun stringOrNull(column: String) = Tables.stringOrNull("${stringId}.$column")
 
+    fun anim(column: String) = Tables.anim("${stringId}.$column")
+
+    fun animOrNull(column: String) = Tables.animOrNull("${stringId}.$column")
+
+    fun gfx(column: String) = Tables.gfx("${stringId}.$column")
+
+    fun gfxOrNull(column: String) = Tables.gfxOrNull("${stringId}.$column")
+
+    fun obj(column: String) = Tables.obj("${stringId}.$column")
+
+    fun objOrNull(column: String) = Tables.objOrNull("${stringId}.$column")
+
     fun item(column: String) = Tables.item("${stringId}.$column")
 
     fun itemOrNull(column: String) = Tables.itemOrNull("${stringId}.$column")
@@ -54,6 +74,12 @@ data class RowDefinition(
     fun itemList(column: String) = Tables.itemList("${stringId}.$column")
 
     fun stringList(column: String) = Tables.stringList("${stringId}.$column")
+
+    fun stringListOrNull(column: String) = Tables.stringListOrNull("${stringId}.$column")
+
+    fun rowList(column: String) = Tables.rowList("${stringId}.$column")
+
+    fun rowListOrNull(column: String) = Tables.rowListOrNull("${stringId}.$column")
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

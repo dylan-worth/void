@@ -8,6 +8,7 @@ import content.entity.player.dialogue.type.npc
 import content.entity.player.dialogue.type.player
 import world.gregs.voidps.engine.Script
 import world.gregs.voidps.engine.data.Settings
+import world.gregs.voidps.engine.data.definition.Areas
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.timer.Timer
 import world.gregs.voidps.engine.timer.toTicks
@@ -21,7 +22,7 @@ class TownCrier : Script {
 
     private val currentOverheads = listOf(
         "The Grand Exchange is now open! Buy and sell items with other players!",
-        "New content is being actively developed — stay tuned for updates!",
+        "New content is being actively developed - stay tuned for updates!",
     )
 
     private val historicalOverheads = listOf(
@@ -125,6 +126,9 @@ class TownCrier : Script {
 
     fun ChoiceOption.rules() {
         option<Quiz>("Tell me about the Rules of RuneScape.") {
+            if (tile in Areas["draynor"]) {
+                set("the_rules_of_engagement_task", true)
+            }
             npc<Neutral>("Take a look at my book here.")
             // TODO: open rules interface
             menu()

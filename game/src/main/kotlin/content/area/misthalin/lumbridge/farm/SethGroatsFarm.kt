@@ -22,7 +22,7 @@ class SethGroatsFarm : Script {
             }
         }
 
-        takeable("super_large_egg") { item ->
+        takeable("super_large_egg") { item, _ ->
             if (questCompleted("cooks_assistant")) {
                 message("You've no reason to pick that up; eggs of that size are only useful for royal cakes.")
                 null
@@ -30,8 +30,13 @@ class SethGroatsFarm : Script {
                 message("You've already got one of those eggs and one's enough.")
                 null
             } else {
-                item
+                item.id
             }
+        }
+
+        objectOperate("Search", "crate_groats_farm*") {
+            // both rs3 and osrs has this messages.
+            message("The crate is empty.")
         }
     }
 }

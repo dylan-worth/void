@@ -16,7 +16,9 @@ import world.gregs.voidps.cache.config.data.InventoryDefinition
 import world.gregs.voidps.cache.config.data.StructDefinition
 import world.gregs.voidps.cache.config.decoder.InventoryDecoder
 import world.gregs.voidps.cache.config.decoder.StructDecoder
+import world.gregs.voidps.cache.definition.data.AnimationDefinition
 import world.gregs.voidps.cache.definition.data.EnumDefinition
+import world.gregs.voidps.cache.definition.data.GraphicDefinition
 import world.gregs.voidps.cache.definition.data.InterfaceDefinition
 import world.gregs.voidps.cache.definition.data.ItemDefinition
 import world.gregs.voidps.cache.definition.data.NPCDefinition
@@ -103,7 +105,7 @@ abstract class WorldTest : KoinTest {
         return player to client
     }
 
-    fun createPlayer(tile: Tile = Tile.EMPTY, name: String = "player${Players.size}"): Player {
+    fun createPlayer(tile: Tile = Tile.EMPTY, name: String = "player${Players.size}", setup: (Player) -> Unit = {}): Player {
         if (Players.any { it.accountName == name }) {
             throw IllegalStateException("Player already exists: $name")
         }
@@ -113,6 +115,7 @@ abstract class WorldTest : KoinTest {
         tick()
         player["creation"] = -1
         player["skip_level_up"] = true
+        setup(player)
         accounts.spawn(player, null)
         player.softTimers.clear("restore_stats")
         player.softTimers.clear("restore_hitpoints")
@@ -161,8 +164,14 @@ abstract class WorldTest : KoinTest {
                         ItemDefinitions.set(itemDefinitions, itemIds)
                         ItemDefinitions
                     }
-                    single(createdAtStart = true) { animationDefinitions }
-                    single(createdAtStart = true) { graphicDefinitions }
+                    single(createdAtStart = true) {
+                        AnimationDefinitions.set(animationDefinitions, animationIds)
+                        AnimationDefinitions
+                    }
+                    single(createdAtStart = true) {
+                        GraphicDefinitions.set(graphicDefinitions, graphicIds)
+                        GraphicDefinitions
+                    }
                     single(createdAtStart = true) {
                         InventoryDefinitions.set(inventoryDefinitions, inventoryIds)
                         InventoryDefinitions
@@ -292,10 +301,12 @@ abstract class WorldTest : KoinTest {
             properties["events.shootingStars.enabled"] = false
             properties["events.livingRockCaverns.respawnTimeMinutes"] = "-1"
             properties["events.livingRockCaverns.patriarchTimeMinutes"] = "-1"
+            properties["hunter.impling.respawnCycleMinutes"] = "-1"
             properties["events.penguinHideAndSeek.enabled"] = false
             properties["events.tearsOfGuthix.active"] = false
             properties["storage.autoSave.minutes"] = 0
             properties["storage.disabled"] = true
+            properties["events.randomEvents.active"] = false
             properties["bots.count"] = 0
             properties.remove("world.id")
             properties.remove("world.name")
@@ -329,11 +340,19 @@ abstract class WorldTest : KoinTest {
             ItemDefinitions.init(itemDefinitions).load(configFiles.list(Settings["definitions.items"]))
             ItemDefinitions.ids
         }
-        private val animationDefinitions: AnimationDefinitions by lazy {
-            AnimationDefinitions(AnimationDecoder().load(cache)).load(configFiles.list(Settings["definitions.animations"]))
+        private val animationDefinitions: Array<AnimationDefinition> by lazy {
+            AnimationDecoder().load(cache)
         }
-        private val graphicDefinitions: GraphicDefinitions by lazy {
-            GraphicDefinitions(GraphicDecoder().load(cache)).load(configFiles.list(Settings["definitions.graphics"]))
+        private val animationIds: Map<String, Int> by lazy {
+            AnimationDefinitions.init(animationDefinitions).load(configFiles.list(Settings["definitions.animations"]))
+            AnimationDefinitions.ids
+        }
+        private val graphicDefinitions: Array<GraphicDefinition> by lazy {
+            GraphicDecoder().load(cache)
+        }
+        private val graphicIds: Map<String, Int> by lazy {
+            GraphicDefinitions.init(graphicDefinitions).load(configFiles.list(Settings["definitions.graphics"]))
+            GraphicDefinitions.ids
         }
         private val interfaceDefinitions: Array<InterfaceDefinition> by lazy {
             InterfaceDecoder().load(cache)
@@ -361,6 +380,8 @@ abstract class WorldTest : KoinTest {
         private val weaponStyleDefinitions: WeaponStyleDefinitions by lazy { WeaponStyleDefinitions().load(configFiles.find(Settings["definitions.weapons.styles"])) }
         private val weaponAnimationDefinitions: WeaponAnimationDefinitions by lazy { WeaponAnimationDefinitions().load(configFiles.find(Settings["definitions.weapons.animations"])) }
         private val enumDefinitions: Array<EnumDefinition> by lazy {
+            animationIds
+            graphicIds
             itemIds
             interfaceIds
             inventoryIds
@@ -373,6 +394,8 @@ abstract class WorldTest : KoinTest {
         }
 
         private val tableDefinitions: Map<String, TableDefinition> by lazy {
+            animationIds
+            graphicIds
             itemIds
             npcIds
             objectIds

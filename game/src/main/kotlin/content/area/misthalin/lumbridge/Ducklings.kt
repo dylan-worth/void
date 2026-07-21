@@ -1,12 +1,13 @@
 package content.area.misthalin.lumbridge
 
 import world.gregs.voidps.engine.Script
+import world.gregs.voidps.engine.entity.character.areaSound
 import world.gregs.voidps.engine.entity.character.mode.EmptyMode
 import world.gregs.voidps.engine.entity.character.mode.Follow
 import world.gregs.voidps.engine.entity.character.mode.Wander
 import world.gregs.voidps.engine.entity.character.npc.NPC
 import world.gregs.voidps.engine.entity.character.npc.NPCs
-import world.gregs.voidps.engine.queue.softQueue
+import world.gregs.voidps.engine.queue.queue
 import world.gregs.voidps.engine.timer.Timer
 import world.gregs.voidps.type.Direction
 import world.gregs.voidps.type.random
@@ -20,6 +21,19 @@ class Ducklings : Script {
             val ducklings: NPC = get("ducklings") ?: return@npcDeath
             ducklings.say("Eek!")
             followParent(ducklings)
+        }
+        npcSpawn("duck_*,drake") {
+            softTimers.start("quack")
+        }
+        npcTimerStart("quack") {
+            // Don't have authentic data.
+            random.nextInt(50, 150)
+        }
+
+        npcTimerTick("quack") {
+            say("Quack!")
+            areaSound("duck_quack", tile)
+            Timer.CONTINUE
         }
     }
 
@@ -38,7 +52,7 @@ class Ducklings : Script {
         parent["ducklings"] = npc
         if (random.nextInt(300) < 1) {
             parent.say("Quack?")
-            npc.softQueue("quack", 1) {
+            npc.queue("quack", 1) {
                 npc.say(if (random.nextBoolean()) "Cheep Cheep!" else "Eep!")
             }
         }

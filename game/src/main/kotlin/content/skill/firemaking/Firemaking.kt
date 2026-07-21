@@ -1,5 +1,6 @@
 package content.skill.firemaking
 
+import content.skill.summoning.familiarBoost
 import world.gregs.voidps.engine.Script
 import world.gregs.voidps.engine.client.instruction.handle.interactFloorItem
 import world.gregs.voidps.engine.client.message
@@ -9,7 +10,6 @@ import world.gregs.voidps.engine.client.variable.start
 import world.gregs.voidps.engine.data.config.RowDefinition
 import world.gregs.voidps.engine.data.definition.Rows
 import world.gregs.voidps.engine.data.definition.Tables
-import world.gregs.voidps.engine.entity.character.mode.interact.Interact
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.chat.ChatType
 import world.gregs.voidps.engine.entity.character.player.skill.Skill
@@ -22,15 +22,13 @@ import world.gregs.voidps.engine.entity.item.floor.FloorItems
 import world.gregs.voidps.engine.entity.obj.GameObjects
 import world.gregs.voidps.engine.entity.obj.ObjectLayer
 import world.gregs.voidps.engine.entity.obj.ObjectShape
+import world.gregs.voidps.engine.entity.obj.stepAway
 import world.gregs.voidps.engine.inv.inventory
 import world.gregs.voidps.engine.inv.remove
 import world.gregs.voidps.engine.suspend.awaitDialogues
-import world.gregs.voidps.type.Direction
 import world.gregs.voidps.type.Tile
 
 class Firemaking : Script {
-
-    val directions = listOf(Direction.WEST, Direction.EAST, Direction.SOUTH, Direction.NORTH)
 
     fun burnable(id: String) = Tables.intOrNull("firemaking.$id.xp") != null
 
@@ -42,6 +40,7 @@ class Firemaking : Script {
             queue.clearWeak()
             if (inventory.remove(logSlot, log.id)) {
                 val floorItem = FloorItems.add(tile, log.id, disappearTicks = 300, owner = this)
+                set("recently_dropped", true)
                 interactFloorItem(floorItem, "Light")
             }
         }
@@ -58,15 +57,17 @@ class Firemaking : Script {
     suspend fun lightFire(
         player: Player,
         floorItem: FloorItem,
+        skip: Boolean = player["recently_dropped", false],
     ) {
         val row = Rows.getOrNull("firemaking.${floorItem.id}") ?: return
         player.arriveDelay()
         player.softTimers.start("firemaking")
+        player.clear("recently_dropped")
         val log = Item(floorItem.id)
         var first = true
         while (player.awaitDialogues()) {
             val level = row.int("level")
-            if (!player.canLight(log.id, level, floorItem)) {
+            if (!player.canLight(log.id, level, floorItem, skip)) {
                 break
             }
             val remaining = player.remaining("action_delay")
@@ -82,7 +83,7 @@ class Firemaking : Script {
                 player.pause(remaining)
             }
             val chance = row.intRange("chance")
-            if (Level.success(player.levels.get(Skill.Firemaking), chance) && FloorItems.remove(floorItem)) {
+            if (Level.success(player.levels.get(Skill.Firemaking) + player.familiarBoost(Skill.Firemaking), chance) && FloorItems.remove(floorItem)) {
                 player.message("The fire catches and the logs begin to burn.", ChatType.Filter)
                 player.exp(Skill.Firemaking, row.int("xp") / 10.0)
                 spawnFire(player, floorItem.tile, row)
@@ -91,9 +92,10 @@ class Firemaking : Script {
         }
         player.start("action_delay", 1)
         player.softTimers.stop("firemaking")
+        player.clearAnim()
     }
 
-    fun Player.canLight(log: String, level: Int, item: FloorItem): Boolean {
+    fun Player.canLight(log: String, level: Int, item: FloorItem, skipFloorCheck: Boolean): Boolean {
         if (log.endsWith("branches") && !inventory.contains("tinderbox_dungeoneering")) {
             message("You don't have the required items to light this.")
             return false
@@ -109,7 +111,7 @@ class Firemaking : Script {
             message("You can't light a fire here.")
             return false
         }
-        return FloorItems.at(item.tile).contains(item)
+        return skipFloorCheck || FloorItems.at(item.tile).contains(item)
     }
 
     fun spawnFire(player: Player, tile: Tile, row: RowDefinition) {
@@ -117,13 +119,6 @@ class Firemaking : Script {
         val life = row.int("life")
         val obj = GameObjects.add("fire_$colour", tile, shape = ObjectShape.CENTRE_PIECE_STRAIGHT, rotation = 0, ticks = life)
         FloorItems.add(tile, "ashes", revealTicks = life, disappearTicks = 60, owner = "")
-        val interact = player.mode as Interact
-        for (dir in directions) {
-            if (interact.canStep(dir.delta.x, dir.delta.y)) {
-                player.steps.queueStep(tile.add(dir))
-                break
-            }
-        }
-        player["face_entity"] = obj
+        player.stepAway(obj, tile)
     }
 }

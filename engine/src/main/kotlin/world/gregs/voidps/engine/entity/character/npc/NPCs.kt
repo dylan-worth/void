@@ -1,6 +1,7 @@
 package world.gregs.voidps.engine.entity.character.npc
 
 import com.github.michaelbull.logging.InlineLogger
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import world.gregs.voidps.cache.definition.data.NPCDefinition
 import world.gregs.voidps.engine.data.definition.NPCDefinitions
 import world.gregs.voidps.engine.entity.Despawn
@@ -10,8 +11,11 @@ import world.gregs.voidps.engine.entity.character.CharacterSearch
 import world.gregs.voidps.engine.entity.character.CharacterIndexMap
 import world.gregs.voidps.engine.entity.character.mode.EmptyMode
 import world.gregs.voidps.engine.entity.character.mode.Wander
+import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.skill.Skill
 import world.gregs.voidps.engine.map.collision.CollisionStrategyProvider
+import world.gregs.voidps.engine.map.collision.random
+import world.gregs.voidps.type.Area
 import world.gregs.voidps.type.Direction
 import world.gregs.voidps.type.RegionLevel
 import world.gregs.voidps.type.Tile
@@ -30,6 +34,7 @@ object NPCs : Runnable,
         private set
     private val zoneMap = CharacterIndexMap(MAX_NPCS)
     internal val regionMap = CharacterIndexMap(MAX_NPCS)
+    internal val spawns = Int2IntOpenHashMap(MAX_NPCS)
     private val logger = InlineLogger()
 
     override fun run() {
@@ -72,8 +77,37 @@ object NPCs : Runnable,
         return npc
     }
 
+    fun add(id: String, tile: Tile, direction: Direction = Direction.SOUTH, ticks: Int, owner: Player? = null): NPC {
+        val npc = add(id, tile, direction)
+        if (ticks > 0) {
+            npc.despawn(ticks)
+        }
+        if (owner != null) {
+            npc["owner"] = owner.accountName
+        }
+        return npc
+    }
+
+    fun ensureSpawn(id: String, tile: Tile): NPC = findBySpawnOrNull(tile, id) ?: add(id, tile)
+
+    /**
+     * Spawns an NPC at a random tile inside [area], honouring the NPC's tile footprint and
+     * collision strategy from its definition so the chosen tile is guaranteed walkable for the
+     * NPC's full size. Returns `null` if the NPC id is unknown or no valid tile can be found
+     * (the underlying [Area.random] retries up to 100 times before giving up).
+     */
+    fun addRandom(id: String, area: Area, direction: Direction = Direction.SOUTH, ticks: Int = -1, owner: Player? = null): NPC? {
+        val def = NPCDefinitions.getOrNull(id) ?: return null
+        val collision = CollisionStrategyProvider.get(def)
+        val tile = area.random(collision, def.size) ?: return null
+        return add(id, tile, direction, ticks, owner)
+    }
+
     fun remove(npc: NPC?): Boolean {
-        if (npc == null || npc.index == -1) {
+        if (npc == null) {
+            return false
+        }
+        if (npc.index == -1) {
             logger.warn { "Unable to remove npc $npc." }
             return false
         }
@@ -97,6 +131,20 @@ object NPCs : Runnable,
     fun find(tile: Tile, id: String) = first(tile) { it.id == id }
 
     fun findOrNull(tile: Tile, id: String) = firstOrNull(tile) { it.id == id }
+
+    fun findBySpawn(tile: Tile, id: String) = findBySpawnOrNull(tile, id)!!
+
+    fun findBySpawnOrNull(tile: Tile, id: String): NPC? {
+        val index = spawns[tile.id]
+        if (index <= 0) {
+            return null
+        }
+        val npc = indexed(index) ?: return null
+        if (npc.id == id) {
+            return npc
+        }
+        return null
+    }
 
     override fun at(tile: Tile): List<NPC> {
         val list = mutableListOf<NPC>()
@@ -158,6 +206,7 @@ object NPCs : Runnable,
         npc.levels.clear(Skill.Defence)
         npc.levels.clear(Skill.Ranged)
         npc.levels.clear(Skill.Magic)
+        spawns[npc.tile.id] = npc.index
         npc["spawn_tile"] = npc.tile
         if (npc.mode == EmptyMode && Wander.wanders(npc)) {
             npc.mode = Wander(npc, npc.tile)

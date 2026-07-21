@@ -3,18 +3,18 @@ package content.entity.player.combat
 import content.entity.combat.hit.Hit
 import content.skill.melee.weapon.attackStyle
 import content.skill.melee.weapon.attackType
-import content.skill.slayer.isTask
 import world.gregs.voidps.engine.Script
-import world.gregs.voidps.engine.data.definition.SpellDefinitions
+import world.gregs.voidps.engine.data.definition.Tables
 import world.gregs.voidps.engine.entity.character.Character
 import world.gregs.voidps.engine.entity.character.npc.NPC
 import world.gregs.voidps.engine.entity.character.player.Player
+import world.gregs.voidps.engine.entity.character.player.Players
 import world.gregs.voidps.engine.entity.character.player.combatLevel
 import world.gregs.voidps.engine.entity.character.player.skill.Skill
 import world.gregs.voidps.engine.entity.character.player.skill.exp.exp
 import kotlin.math.floor
 
-class CombatExperience(val definitions: SpellDefinitions) : Script {
+class CombatExperience : Script {
 
     init {
         combatAttack { (target, damage, type, _, spell, _) ->
@@ -22,7 +22,7 @@ class CombatExperience(val definitions: SpellDefinitions) : Script {
                 return@combatAttack
             }
             if (type == "magic" || type == "blaze") {
-                val base = definitions.get(spell).experience
+                val base = (Tables.intOrNull("spells.$spell.xp") ?: 0) / 10.0
                 if (get("defensive_cast", false)) {
                     grant(this, target, Skill.Magic, base + damage / 7.5)
                     grant(this, target, Skill.Defence, damage / 10.0)
@@ -48,10 +48,31 @@ class CombatExperience(val definitions: SpellDefinitions) : Script {
                     grant(this, target, Skill.Ranged, damage / 2.5)
                 }
             }
-            if (target is NPC && isTask(target)) {
-                grant(this, target, Skill.Slayer, target.def["slayer_xp", 0.0])
-            }
             grant(this, target, Skill.Constitution, damage / 7.5)
+        }
+
+        // Combat familiars grant their owner combat xp for the damage they deal: the skill for
+        // the owner's chosen melee style (or the familiar's range/magic type), plus Constitution.
+        npcCombatAttack("*_familiar*") { (target, damage, type) ->
+            if (damage <= 0) {
+                return@npcCombatAttack
+            }
+            val owner = Players.indexed(this["owner_index", -1]) ?: return@npcCombatAttack
+            when {
+                type == "magic" || type == "blaze" -> grant(owner, target, Skill.Magic, damage / 5.0)
+                type == "range" -> grant(owner, target, Skill.Ranged, damage / 2.5)
+                Hit.meleeType(type) || type == "scorch" -> when (owner.attackStyle) {
+                    "aggressive" -> grant(owner, target, Skill.Strength, damage / 2.5)
+                    "controlled" -> {
+                        grant(owner, target, Skill.Attack, damage / 7.5)
+                        grant(owner, target, Skill.Strength, damage / 7.5)
+                        grant(owner, target, Skill.Defence, damage / 7.5)
+                    }
+                    "defensive" -> grant(owner, target, Skill.Defence, damage / 2.5)
+                    else -> grant(owner, target, Skill.Attack, damage / 2.5)
+                }
+            }
+            grant(owner, target, Skill.Constitution, damage / 7.5)
         }
     }
 

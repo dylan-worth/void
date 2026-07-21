@@ -1,5 +1,6 @@
 package content.skill.slayer
 
+import content.entity.player.dialogue.Confused
 import content.entity.player.dialogue.Happy
 import content.entity.player.dialogue.Neutral
 import content.entity.player.dialogue.Quiz
@@ -12,33 +13,25 @@ import world.gregs.voidps.engine.Script
 import world.gregs.voidps.engine.client.message
 import world.gregs.voidps.engine.data.definition.Tables
 import world.gregs.voidps.engine.entity.character.player.name
-import world.gregs.voidps.engine.queue.queue
 
 class EnchantedGem : Script {
 
     init {
-        playerSpawn {
-            sendVariable("slayer_count")
-            sendVariable("slayer_target")
-        }
-
         itemOption("Activate", "enchanted_gem") {
-            queue("enchanted_gem_activate") {
-                val master = slayerMaster
-                npc<Happy>(master, "Hello there ${this@itemOption.name}, what can I help you with?")
-                choice {
-                    howAmIDoing()
-                    whoAreYou()
-                    whereAreYou()
-                    anyTips()
-                    option<Neutral>("That's all thanks.")
-                }
+            val master = slayerMaster
+            npc<Happy>(master, "Hello there ${this@itemOption.name}, what can I help you with?")
+            choice {
+                howAmIDoing()
+                whoAreYou()
+                whereAreYou()
+                anyTips()
+                option<Neutral>("That's all thanks.")
             }
         }
 
         itemOption("Kills-left", "enchanted_gem,ring_of_slaying_*") {
             if (slayerTask == "nothing") {
-                message("") // TODO
+                message("You need something new to hunt; return to a Slayer master.")
             } else {
                 message("Your current assignment is: ${slayerTask.lowercase()}; only $slayerTaskRemaining more to go.")
             }
@@ -48,7 +41,7 @@ class EnchantedGem : Script {
     fun ChoiceOption.howAmIDoing() {
         option<Quiz>("How am I doing so far?") {
             if (slayerTask == "nothing") {
-                // TODO
+                npc<Confused>(slayerMaster, "You need something new to hunt. Come and see me when you can and I'll give you a new task.")
             } else {
                 npc<Happy>(slayerMaster, "You're currently assigned to kill ${slayerTask.toLowerSpaceCase()}; only $slayerTaskRemaining more to go. Your reward point tally is $slayerPoints.")
             }

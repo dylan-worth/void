@@ -94,6 +94,7 @@ sealed class Condition(val priority: Int) {
             "owns" -> parseOwns(list)
             "variable" -> parseVariable(list)
             "clock" -> parseClock(list)
+            "members" -> parseMembers(list)
             "timer" -> parseTimer(list)
             "queue" -> parseQueue(list)
             "area" -> parseArea(list)
@@ -104,7 +105,56 @@ sealed class Condition(val priority: Int) {
             "interface_closed" -> parseInterfaceClosed(list)
             "mode" -> parseMode(list)
             "skill" -> parseSkills(list)
+            "skill_percent" -> parseSkillPercent(list)
+            "attacker_style" -> parseAttackerStyle(list)
+            "target_hp_percent" -> parseTargetHpPercent(list)
+            "target_frozen" -> parseTargetFrozen(list)
+            "pvp_retreat_needed" -> BotPvpRetreatNeeded()
+            "any" -> parseAny(list)
             else -> null
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        private fun parseAny(list: List<Map<String, Any>>): Condition {
+            val children = mutableListOf<Condition>()
+            for (map in list) {
+                val key = map.keys.singleOrNull() ?: error("any child must be single-key map: $map")
+                val value = map[key]
+                val subList: List<Map<String, Any>> = when (value) {
+                    is Map<*, *> -> listOf(value as Map<String, Any>)
+                    is List<*> -> value as List<Map<String, Any>>
+                    else -> error("any child value must be map or list: $map")
+                }
+                val child = parse(key, subList) ?: error("No condition parser for '$key' in any.")
+                children.add(child)
+            }
+            return BotAnyCondition(children)
+        }
+
+        private fun parseEnumSet(list: List<Map<String, Any>>): Set<String>? {
+            val map = list.single()
+            val raw = map["equals"] as? String ?: return null
+            return raw.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        }
+
+        private fun parseAttackerStyle(list: List<Map<String, Any>>): Condition? {
+            val equals = parseEnumSet(list) ?: return null
+            return BotAttackerStyle(equals)
+        }
+
+        private fun parseTargetHpPercent(list: List<Map<String, Any>>): Condition? {
+            val map = list.single()
+            val min = (map["min"] as? Number)?.toDouble()
+            val max = (map["max"] as? Number)?.toDouble()
+            if (min == null && max == null) return null
+            return BotTargetHpPercent(min = min, max = max)
+        }
+
+        private fun parseTargetFrozen(list: List<Map<String, Any>>): Condition {
+            val map = list.singleOrNull() ?: emptyMap()
+            val hpMin = (map["hp_min"] as? Number)?.toDouble()
+            val hpMax = (map["hp_max"] as? Number)?.toDouble()
+            return BotTargetFrozen(hpMin = hpMin, hpMax = hpMax)
         }
 
         private fun parseInventory(list: List<Map<String, Any>>): BotInventorySetup = BotInventorySetup(parseItems(list))
@@ -196,6 +246,14 @@ sealed class Condition(val priority: Int) {
             return null
         }
 
+        private fun parseMembers(list: List<Map<String, Any>>): BotMembers? {
+            val map = list.single()
+            if (map.containsKey("req")) {
+                return BotMembers(map["req"] as Boolean)
+            }
+            return null
+        }
+
         private fun parseTimer(list: List<Map<String, Any>>): Condition? {
             val map = list.single()
             if (map.containsKey("id")) {
@@ -239,7 +297,8 @@ sealed class Condition(val priority: Int) {
         private fun parseArea(list: List<Map<String, Any>>): Condition? {
             val map = list.single()
             if (map.containsKey("id")) {
-                return BotInArea(id = map["id"] as String)
+                val present = map["present"] as? Boolean ?: true
+                return BotInArea(id = map["id"] as String, present = present)
             }
             return null
         }
@@ -283,16 +342,28 @@ sealed class Condition(val priority: Int) {
                     skill = Skill.of((map["id"] as String).toPascalCase()) ?: error("Unknown skill: '${map["id"]}'"),
                     min = map["min"] as? Int,
                     max = map["max"] as? Int,
+                    current = map["current"] as? Boolean ?: false,
                 )
             }
             return null
+        }
+
+        private fun parseSkillPercent(list: List<Map<String, Any>>): Condition? {
+            val map = list.single()
+            if (!map.containsKey("id")) return null
+            if (!map.containsKey("min_percent") && !map.containsKey("max_percent")) return null
+            return BotSkillPercent(
+                skill = Skill.of((map["id"] as String).toPascalCase()) ?: error("Unknown skill: '${map["id"]}'"),
+                minPercent = map["min_percent"] as? Int,
+                maxPercent = map["max_percent"] as? Int,
+            )
         }
 
         fun grant(player: Player, condition: Condition) {
             when (condition) {
                 is BotCombatLevel -> {
                     val skills = setOf(Skill.Attack, Skill.Strength, Skill.Defence, Skill.Constitution, Skill.Ranged, Skill.Magic, Skill.Prayer)
-                    for (i in 0 until 50) {
+                    for (@Suppress("UNUSED_PARAMETER") i in 0 until 50) {
                         val skill = skills.random(random)
                         val level = (player.levels.getMax(skill) + 5).coerceAtMost(99)
                         player.levels.set(skill, level)

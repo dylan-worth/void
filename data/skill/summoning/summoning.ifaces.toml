@@ -43,6 +43,9 @@ id = 79
 id = 662
 type = "follower_details_tab"
 
+[.chathead]
+id = 1
+
 [.call]
 id = 49
 
@@ -63,6 +66,9 @@ id = 75
 
 [.cast_dreadfowl_strike]
 id = 77
+
+[.cast_special_move]
+id = 79
 
 [.cast_rise_from_the_ashes]
 id = 78
@@ -272,6 +278,9 @@ id = 213
 id = 663
 type = "follower_details_tab"
 
+[.chathead]
+id = 3
+
 [.call]
 id = 21
 
@@ -290,6 +299,18 @@ id = 18
 
 [beast_of_burden]
 id = 671
+type = "main_screen"
+
+[.items]
+id = 27
+inventory = "beast_of_burden"
+options = { Withdraw-1 = 0, Withdraw-5 = 1, Withdraw-10 = 2, Withdraw-All = 3, Withdraw-X = 4, Examine = 9 }
+
+[.close]
+id = 13
+
+[.take_bob]
+id = 29
 
 [summoning_pouch_creation]
 id = 672
@@ -304,6 +325,24 @@ id = 19
 [dialogue_pick_a_puppy]
 id = 668
 type = "dialogue_box"
+
+[.bulldog]
+id = 3
+
+[.dalmatian]
+id = 4
+
+[.greyhound]
+id = 5
+
+[.terrier]
+id = 6
+
+[.sheepdog]
+id = 7
+
+[.labrador]
+id = 8
 
 [dialogue_pick_a_kitten]
 id = 737
@@ -360,4 +399,10 @@ id = 21
 
 [summoning_side]
 id = 722
+type = "inventory_tab"
+
+[.inventory]
+id = 0
+inventory = "inventory"
+options = { Store-1 = 0, Store-5 = 1, Store-10 = 2, Store-All = 3, Store-X = 4, Examine = 9 }
 

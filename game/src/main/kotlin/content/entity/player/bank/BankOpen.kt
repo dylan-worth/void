@@ -1,6 +1,8 @@
 package content.entity.player.bank
 
 import content.entity.player.bank.Bank.tabs
+import content.entity.player.bank.pin.openBank
+import content.entity.player.bank.pin.openCollection
 import content.entity.player.command.find
 import content.entity.player.modal.Tab
 import content.entity.player.modal.tab
@@ -24,15 +26,16 @@ class BankOpen(val accounts: AccountDefinitions) : Script {
         adminCommand("bank", stringArg("player-name", optional = true, autofill = accounts.displayNames.keys), desc = "Open the players bank", handler = ::bank)
 
         objectOperate("Use-quickly") {
-            open("bank")
+            openBank()
         }
 
         objectOperate("Collect") {
-            open("collection_box")
+            openCollection()
         }
 
         interfaceClosed("bank") {
             set("bank_hidden", true)
+            set("bank_searching", false)
             close("bank_side")
             open("inventory")
             sendScript("clear_dialogues")
@@ -63,10 +66,21 @@ class BankOpen(val accounts: AccountDefinitions) : Script {
             }
             sendVariable("last_bank_amount")
             sendScript("update_bank_slots")
-            set("bank_search_reset", true)
+            set("bank_searching", false)
+            armBankSearch()
             interfaceOptions.unlockAll("bank", "inventory", 0 until 516)
             interfaceOptions.unlockAll("bank_side", "inventory", 0 until 28)
             tab(Tab.Inventory)
+        }
+
+        interfaceOption("Search", "bank:search") {
+            armBankSearch()
+            val searching = !get("bank_searching", false)
+            set("bank_searching", searching)
+            if (!searching) {
+                sendInventory("bank")
+                sendScript("update_bank_slots")
+            }
         }
 
         interfaceOption("Show Equipment Stats", "bank:equipment") {
@@ -96,5 +110,11 @@ class BankOpen(val accounts: AccountDefinitions) : Script {
         }
         player.open("bank")
         player.sendInventory(target.bank)
+    }
+
+    private fun Player.armBankSearch() {
+        set("bank_search_reset", 1)
+        sendVariable("bank_search_reset")
+        sendScript("bank_search_arm")
     }
 }

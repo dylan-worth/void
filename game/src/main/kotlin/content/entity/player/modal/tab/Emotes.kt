@@ -5,6 +5,7 @@ import content.entity.effect.transform
 import content.entity.gfx.areaGfx
 import content.entity.player.dialogue.type.statement
 import net.pearx.kasechange.toSnakeCase
+import world.gregs.voidps.cache.definition.Params
 import world.gregs.voidps.engine.Script
 import world.gregs.voidps.engine.client.message
 import world.gregs.voidps.engine.data.definition.InterfaceDefinitions
@@ -13,7 +14,6 @@ import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.equip.equipped
 import world.gregs.voidps.engine.entity.character.player.skill.Skill
 import world.gregs.voidps.engine.map.collision.blocked
-import world.gregs.voidps.engine.queue.strongQueue
 import world.gregs.voidps.network.login.protocol.visual.update.player.EquipSlot
 import world.gregs.voidps.type.Direction
 import world.gregs.voidps.type.random
@@ -29,12 +29,9 @@ class Emotes : Script {
     }
 
     init {
-        interfaceOpened("emotes") { id ->
-            for (compId in unlockableEmotes) {
-                val component = InterfaceDefinitions.getComponent(id, compId) ?: continue
-                sendVariable("unlocked_emote_${component.stringId}")
-            }
-            sendVariable("unlocked_emote_lost_tribe")
+        playerSpawn {
+            val item = equipped(EquipSlot.Cape)
+            set("unlocked_emote_skillcape", item.def.contains(Params.SKILLCAPE_SKILL) || item.id == "quest_point_cape")
         }
 
         interfaceRefresh("emotes") {
@@ -42,46 +39,41 @@ class Emotes : Script {
         }
 
         interfaceOption(id = "emotes:*") {
-            if (queue.contains("emote")) {
-                return@interfaceOption
-            }
             val id = it.option.toSnakeCase()
             val componentId = InterfaceDefinitions.getComponent(it.id, it.component)!!
             if (componentId.index > 23 && !unlocked(id, it.option)) {
                 return@interfaceOption
             }
-            strongQueue("emote") {
-                when {
-                    id == "skillcape" -> {
-                        val cape = equipped(EquipSlot.Cape)
-                        val skill: Skill? = cape.def.getOrNull("skillcape_skill")
-                        when {
-                            cape.id == "quest_point_cape" -> playSkillCapeEmote("quest_point")
-                            cape.id == "dungeoneering_master_cape" -> playDungeoneeringMasterCapeEmote()
-                            skill == Skill.Dungeoneering -> playDungeoneeringCapeEmote()
-                            skill != null -> playSkillCapeEmote(skill.name.lowercase())
-                        }
+            when (id) {
+                "skillcape" -> {
+                    val cape = equipped(EquipSlot.Cape)
+                    val skill: Skill? = cape.def.getOrNull<Int>("skillcape_skill")?.let { int -> Skill.all[int] }
+                    when {
+                        cape.id == "quest_point_cape" -> playSkillCapeEmote("quest_point")
+                        cape.id == "dungeoneering_master_cape" -> playDungeoneeringMasterCapeEmote()
+                        skill == Skill.Dungeoneering -> playDungeoneeringCapeEmote()
+                        skill != null -> playSkillCapeEmote(skill.name.lowercase())
                     }
-                    id == "seal_of_approval" -> playSealOfApprovalEmote()
-                    id == "give_thanks" -> playGiveThanksEmote()
-                    id == "angry" && equipped(EquipSlot.Hat).id == "a_powdered_wig" -> playEnhancedEmote(id)
-                    id == "yawn" && equipped(EquipSlot.Hat).id == "sleeping_cap" -> playEnhancedYawnEmote()
-                    id == "bow" && equipped(EquipSlot.Legs).id == "pantaloons" -> playEnhancedEmote(id)
-                    id == "dance" && equipped(EquipSlot.Legs).id == "flared_trousers" -> playEnhancedEmote(id)
-                    id == "flap" && equipped(EquipSlot.Feet).id == "chicken_feet" && equipped(EquipSlot.Legs).id == "chicken_legs" && equipped(EquipSlot.Chest).id == "chicken_wings" && equipped(EquipSlot.Hat).id == "chicken_head" -> playEnhancedEmote(id)
-                    else -> {
-                        if (id == "air_guitar") {
-                            jingle(id)
-                        }
-                        gfx("emote_$id")
-                        anim("emote_$id")
+                }
+                "seal_of_approval" -> playSealOfApprovalEmote()
+                "give_thanks" -> playGiveThanksEmote()
+                "angry" if equipped(EquipSlot.Hat).id == "a_powdered_wig" -> playEnhancedEmote(id)
+                "yawn" if equipped(EquipSlot.Hat).id == "sleeping_cap" -> playEnhancedYawnEmote()
+                "bow" if equipped(EquipSlot.Legs).id == "pantaloons" -> playEnhancedEmote(id)
+                "dance" if equipped(EquipSlot.Legs).id == "flared_trousers" -> playEnhancedEmote(id)
+                "flap" if equipped(EquipSlot.Feet).id == "chicken_feet" && equipped(EquipSlot.Legs).id == "chicken_legs" && equipped(EquipSlot.Chest).id == "chicken_wings" && equipped(EquipSlot.Hat).id == "chicken_head" -> playEnhancedEmote(id)
+                else -> {
+                    if (id == "air_guitar") {
+                        jingle(id)
                     }
+                    gfx("emote_$id")
+                    animDelay("emote_$id")
                 }
             }
         }
 
         slotChanged("worn_equipment", EquipSlot.Cape) {
-            set("unlocked_emote_skillcape", it.item.def.contains("skill_cape") || it.item.def.contains("skill_cape_t") || it.item.id == "quest_point_cape")
+            set("unlocked_emote_skillcape", it.item.def.contains(Params.SKILLCAPE_SKILL) || it.item.id == "quest_point_cape")
         }
     }
 
@@ -213,27 +205,26 @@ class Emotes : Script {
 
     suspend fun Player.playDungeoneeringMasterCapeEmote() {
         val direction = direction
-
         transform("sagittarian_ranger")
         gfx("emote_dung_master_bow")
         var tile = tile.add(direction.rotate(1))
-        var rotation = tile.delta(tile).toDirection().rotate(2)
+        var rotation = this.tile.delta(tile).toDirection().rotate(2).inverse()
         areaGfx("emote_dung_master_hobgoblin", tile, rotation = rotation)
         animDelay("emote_dung_master_bow")
 
         transform("celestial_mage")
         gfx("emote_dung_master_spell")
-        tile = tile.add(direction.rotate(7))
-        rotation = tile.delta(tile).toDirection().rotate(4)
+        tile = this.tile.add(direction.rotate(7))
+        rotation = this.tile.delta(tile).toDirection().rotate(4).inverse()
         areaGfx("emote_dung_master_gravecreeper", tile, rotation = rotation)
         animDelay("emote_dung_master_spell")
 
         transform("primal_warrior")
         gfx("emote_dung_master_return")
-        tile = tile.add(direction)
+        tile = this.tile.add(direction)
         rotation = direction.inverse().rotate(7)
         areaGfx("emote_dung_master_flesh_spoiler", tile, rotation = rotation)
-        tile = tile.add(direction.inverse())
+        tile = this.tile.add(direction.inverse())
         rotation = direction.rotate(3)
         areaGfx("emote_dung_master_cursebearer", tile, rotation = rotation)
         animDelay("emote_dung_master_sword")

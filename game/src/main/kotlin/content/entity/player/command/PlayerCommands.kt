@@ -149,9 +149,9 @@ class PlayerCommands(
 
     fun prayers(player: Player, args: List<String>) {
         val target = Players.find(player, args.getOrNull(1)) ?: return
-        val name = args.getOrNull(0)?.removeSuffix("s") ?: "normal"
-        if (name == "regular" || name == "modern") {
-            player.message("Unknown prayer type '$name'. Did you mean 'normal'?", ChatType.Console)
+        val name = args.getOrNull(0) ?: "normal"
+        if (name !in setOf("normal", "curses")) {
+            player.message("Unknown prayer type '$name'. Expected 'normal' or 'curses'.", ChatType.Console)
             return
         }
         target[PRAYERS] = name
@@ -333,7 +333,7 @@ fun Players.find(player: Player, name: String?): Player? {
     if (name == null) {
         return player
     }
-    val target = firstOrNull { it.name.equals(name, true) } ?: firstOrNull { it.name.replace(" ", "_").startsWith(name, true) }
+    val target = find(name) ?: firstOrNull { it.name.startsWith(name.replace('_', ' '), true) }
     if (target == null) {
         player.message("Unable to find player '$name' online.", ChatType.Console)
         return null

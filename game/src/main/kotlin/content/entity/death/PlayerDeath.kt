@@ -1,12 +1,15 @@
 package content.entity.death
 
 import content.area.misthalin.lumbridge.church.Gravestone
+import content.area.wilderness.inFullPvp
 import content.area.wilderness.inMultiCombat
-import content.area.wilderness.inWilderness
+import content.bot.isBot
 import content.entity.combat.*
 import content.entity.combat.Target
 import content.entity.combat.hit.directHit
 import content.entity.gfx.areaGfx
+import content.entity.player.effect.energy.MAX_RUN_ENERGY
+import content.entity.player.effect.energy.runEnergy
 import content.entity.player.inv.item.tradeable
 import content.entity.player.kept.ItemsKeptOnDeath
 import content.entity.proj.shoot
@@ -55,17 +58,17 @@ class PlayerDeath : Script {
                 steps.clear()
                 val dealer = damageDealers.maxByOrNull { it.value }
                 val killer = dealer?.key
-                AuditLog.event(player, "died", tile, killer)
+                AuditLog.event(this, "died", tile, killer)
                 while (true) {
                     instructions.tryReceive().getOrNull() ?: break
                 }
                 val tile = tile.copy()
                 set("death_tile", tile)
-                val wilderness = inWilderness
-                retribution(player)
-                wrath(player)
+                retribution(this)
+                wrath(this)
                 message("Oh dear, you are dead!")
                 anim("human_death")
+                queue.clear()
                 delay(5)
                 clearAnim()
                 attackers.clear()
@@ -77,9 +80,10 @@ class PlayerDeath : Script {
                 dismissFamiliar()
                 if (onDeath.dropItems) {
                     val tile = instanceLogout() ?: tile
-                    dropItems(player, killer, tile, wilderness)
+                    dropItems(this, killer, tile)
                 }
                 levels.clear()
+                runEnergy = MAX_RUN_ENERGY
                 if (onDeath.teleport != null) {
                     tele(onDeath.teleport!!)
                 } else {
@@ -91,7 +95,7 @@ class PlayerDeath : Script {
         }
     }
 
-    fun dropItems(player: Player, killer: Character?, tile: Tile, inWilderness: Boolean) {
+    fun dropItems(player: Player, killer: Character?, tile: Tile) {
         if (player.isAdmin()) {
             return
         }
@@ -105,16 +109,18 @@ class PlayerDeath : Script {
             }
         }
 
+        // inFullPvp covers wilderness + the Clan Wars FFA dangerous arena: no grave, drops go to the killer.
+        val pvpDrop = player.inFullPvp
         // Spawn grave
         val time = when {
-            inWilderness && killer is Player -> 0
+            pvpDrop && killer is Player -> 0
             tile in Areas["corporeal_beasts_lair"] -> TimeUnit.SECONDS.toTicks(210)
             else -> Gravestone.spawn(player, tile)
         }
         // Drop everything
-        drop(player, Item("bones"), tile, inWilderness, killer, time)
-        drop(player, player.inventory, tile, inWilderness, killer, time)
-        drop(player, player.equipment, tile, inWilderness, killer, time)
+        drop(player, Item("bones"), tile, pvpDrop, killer, time)
+        drop(player, player.inventory, tile, pvpDrop, killer, time)
+        drop(player, player.equipment, tile, pvpDrop, killer, time)
         // Clear everything
         player.inventory.clear()
         player.equipment.clear()
@@ -145,10 +151,13 @@ class PlayerDeath : Script {
     ) {
         AuditLog.event(player, "lost", item)
         if (inWilderness && killer is Player) {
+            // PvP bot kills: drops stay private to the killer until despawn — never revealed to others.
+            // Real players keep the standard 180-tick private window before becoming public loot.
+            val reveal = if (player.isBot) FloorItems.NEVER else 180
             if (item.tradeable) {
-                FloorItems.add(tile, item.id, item.amount, revealTicks = 180, disappearTicks = 240, owner = killer)
+                FloorItems.add(tile, item.id, item.amount, revealTicks = reveal, disappearTicks = 240, owner = killer)
             } else {
-                FloorItems.add(tile, "coins", item.amount * item.def.cost, revealTicks = 180, disappearTicks = 240, owner = killer)
+                FloorItems.add(tile, "coins", item.amount * item.def.cost, revealTicks = reveal, disappearTicks = 240, owner = killer)
             }
         } else {
             FloorItems.add(tile, item.id, item.amount, revealTicks = time, disappearTicks = time + 60, owner = player)

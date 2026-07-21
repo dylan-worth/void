@@ -1,5 +1,7 @@
 package content.entity.npc
 
+import content.entity.player.bank.pin.openBank
+import content.entity.player.bank.pin.openCollection
 import content.entity.player.dialogue.Neutral
 import content.entity.player.dialogue.Quiz
 import content.entity.player.dialogue.type.choice
@@ -15,7 +17,7 @@ import world.gregs.voidps.engine.entity.character.player.Player
 class Banker : Script {
 
     init {
-        npcApproach("Talk-to", "banker*") {
+        npcApproach("Talk-to", "banker*,fremennik_banker") {
             approachRange(2)
             npc<Quiz>("Good day. How may I help you?")
             val loanReturned = getSecondsRemaining(this, "lend_timeout") < 0
@@ -30,7 +32,7 @@ class Banker : Script {
         }
 
         objectOperate("Use", "bank_chest_*") {
-            open("bank")
+            openBank()
         }
 
         objectOperate("Use", "bank_booth_*", arrive = false) { (target) ->
@@ -39,22 +41,22 @@ class Banker : Script {
             menu()
         }
 
-        npcApproach("Bank", "banker*") {
+        npcApproach("Bank", "banker*,fremennik_banker") {
             approachRange(2)
-            open("bank")
+            openBank()
         }
 
-        npcApproach("Collect", "banker*") {
+        npcApproach("Collect", "banker*,fremennik_banker") {
             approachRange(2)
-            open("collection_box")
+            openCollection()
         }
     }
 
     suspend fun Player.menu() {
         choice {
-            option("I'd like to access my bank account, please.", block = { open("bank") })
-            option("I'd like to check my PIN settings.", block = { open("bank_pin") })
-            option("I'd like to see my collection box.", block = { open("collection_box") })
+            option("I'd like to access my bank account, please.", block = { openBank() })
+            option("I'd like to check my PIN settings.", block = { open("bank_pin_settings") })
+            option("I'd like to see my collection box.", block = { openCollection() })
             option("I'd like to see my Returned Items box.", block = { open("returned_items") })
             option("What is this place?") {
                 npc<Neutral>("This is a branch of the Bank of ${Settings["server.name"]}. We have branches in many towns.")

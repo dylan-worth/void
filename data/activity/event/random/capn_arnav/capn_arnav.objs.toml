@@ -1,0 +1,13 @@
+[capn_arnav_chest]
+id = 42337
+examine = "Cap'n Arnav's treasure chest."
+
+[capn_arnav_chest_open]
+id = 42338
+
+[capn_arnav_exit_portal]
+id = 11369
+
+[bank_deposit_box_capn_arnav]
+id = 2133
+examine = "Lets you put items into your bank."

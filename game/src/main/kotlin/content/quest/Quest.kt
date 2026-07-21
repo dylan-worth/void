@@ -3,11 +3,13 @@ package content.quest
 import world.gregs.voidps.engine.client.sendScript
 import world.gregs.voidps.engine.client.ui.open
 import world.gregs.voidps.engine.data.Settings
+import world.gregs.voidps.engine.data.definition.VariableDefinitions
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.item.Item
 
 val quests = setOf(
     // free
+    "blood_pact",
     "unstable_foundations",
     "cooks_assistant",
     "demon_slayer",
@@ -19,17 +21,27 @@ val quests = setOf(
     "prince_ali_rescue",
     "imp_catcher",
     // members
+    "creature_of_fenkenstrain",
     "druidic_ritual",
+    "nature_spirit",
     "plague_city",
+    "priest_in_peril",
     "lost_city",
     "tears_of_guthix",
     "waterfall_quest",
     "jungle_potion",
+    "zogre_flesh_eaters",
     // mini-quests
     "enter_the_abyss",
 )
 
 fun Player.quest(name: String): String = this[name, "unstarted"]
+
+fun Player.questStage(name: String): Int {
+    val value = quest(name)
+    val def = VariableDefinitions.get(name) ?: return 0
+    return def.values.toInt(value)
+}
 
 fun Player.questCompleted(name: String): Boolean {
     if (!quests.contains(name) && Settings["quests.requirements.skipMissing", false]) {

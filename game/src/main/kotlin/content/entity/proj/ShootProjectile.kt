@@ -12,6 +12,7 @@ import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.get
 import world.gregs.voidps.network.login.protocol.encode.zone.ProjectileAddition
 import world.gregs.voidps.type.Delta
+import world.gregs.voidps.type.Distance
 import world.gregs.voidps.type.Tile
 
 object ShootProjectile {
@@ -130,21 +131,24 @@ fun Character.shoot(
     width: Int = size,
     tileOffsetX: Int = 0,
     tileOffsetY: Int = 0,
-) = projectile(
-    id = id,
-    target = target,
-    flightTime = flightTime,
-    delay = delay,
-    startHeight = height,
-    endHeight = endHeight,
-    curve = curve,
-    offset = offset,
-    width = width,
-    sourceHeight = this.height,
-    targetHeight = target.height,
-    targetTile = target.tile,
-    sourceTile = tile.add(tileOffsetX, tileOffsetY),
-)
+): Int {
+    val explicitOrigin = tileOffsetX != 0 || tileOffsetY != 0
+    return projectile(
+        id = id,
+        target = target,
+        flightTime = flightTime,
+        delay = delay,
+        startHeight = height,
+        endHeight = endHeight,
+        curve = curve,
+        offset = offset,
+        width = if (explicitOrigin) width else 1,
+        sourceHeight = this.height,
+        targetHeight = target.height,
+        targetTile = target.tile,
+        sourceTile = if (explicitOrigin) tile.add(tileOffsetX, tileOffsetY) else Distance.nearest(tile, size, size, target.tile),
+    )
+}
 
 /**
  * Tile dragon breath originates from.
@@ -195,7 +199,7 @@ private fun projectile(
     sourceHeight: Int = 0,
     targetHeight: Int = 0,
 ): Int {
-    val definition = get<GraphicDefinitions>().getOrNull(id) ?: return -1
+    val definition = GraphicDefinitions.getOrNull(id) ?: return -1
     val time = flightTime(definition, sourceTile, targetTile, flightTime)
     if (time == -1) {
         return -1
@@ -228,7 +232,6 @@ private fun sendProjectile(
     curve: Int = DEFAULT_CURVE,
     offset: Int = DEFAULT_OFFSET,
 ) {
-    val definitions: GraphicDefinitions = get()
     var index = if (target != null) target.index + 1 else 0
     if (target is Player) {
         index = -index
@@ -237,7 +240,7 @@ private fun sendProjectile(
         tile.zone,
         ProjectileAddition(
             tile = tile.id,
-            id = definitions.get(id).id,
+            id = GraphicDefinitions.get(id).id,
             index = index,
             directionX = direction.x,
             directionY = direction.y,

@@ -10,7 +10,7 @@ import world.gregs.voidps.engine.data.definition.InterfaceDefinitions
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.name
 import world.gregs.voidps.engine.get
-import world.gregs.voidps.engine.suspend.ContinueSuspension
+import world.gregs.voidps.engine.suspend.pauseButton
 import world.gregs.voidps.network.login.protocol.encode.playerDialogueHead
 
 suspend inline fun <reified E : Expression> Player.player(text: String, largeHead: Boolean = false, clickToContinue: Boolean = true, title: String? = null) {
@@ -18,16 +18,28 @@ suspend inline fun <reified E : Expression> Player.player(text: String, largeHea
     player(expression, text, largeHead, clickToContinue, title)
 }
 
+@JvmName("playerExpression")
 suspend fun Player.player(expression: String, text: String, largeHead: Boolean = false, clickToContinue: Boolean = true, title: String? = null) {
     val lines = if (text.contains("\n")) text.trimIndent().lines() else get<FontDefinitions>().get("q8_full").splitLines(text, 380)
-    check(lines.size <= 4) { "Maximum player chat lines exceeded ${lines.size} for $this" }
+    if (lines.size > 4) {
+        for (chunk in lines.chunked(4)) {
+            player(expression, chunk, largeHead, clickToContinue, title)
+        }
+    } else {
+        player(expression, lines, largeHead, clickToContinue, title)
+    }
+}
+
+private suspend fun Player.player(expression: String, lines: List<String>, largeHead: Boolean, clickToContinue: Boolean, title: String?) {
     val id = getInterfaceId(lines.size, clickToContinue)
-    check(open(id)) { "Unable to open player dialogue for $this" }
+    if (!open(id)) {
+        return
+    }
     val head = getChatHeadComponentName(largeHead)
     sendPlayerHead(this, id, head)
     interfaces.sendChat(id, head, expression, title ?: name, lines)
     if (clickToContinue) {
-        ContinueSuspension.get(this)
+        pauseButton()
         close(id)
     }
 }

@@ -57,7 +57,7 @@ class ItemOnItems(val itemOnItemDefs: ItemOnItemDefinitions) : Script {
                     )
                     overlaps.first { it.add.first().id == selection } to amount
                 }
-                useItemOnItem(player, def.skill, def, amount, 0)
+                useItemOnItem(this, def.skill, def, amount, 0)
             }
         }
 
@@ -176,7 +176,9 @@ class ItemOnItems(val itemOnItemDefs: ItemOnItemDefinitions) : Script {
         for (item in def.requires) {
             if (!inventory.contains(item.id, item.amount)) {
                 error = TransactionError.Deficient(item.amount)
-                return "You need a ${item.def.name.lowercase()} to ${def.type} this."
+                return def.requiresMessage.ifEmpty {
+                    "You need a ${item.def.name.lowercase()} to ${def.type} this."
+                }
             }
         }
         for (item in def.remove) {

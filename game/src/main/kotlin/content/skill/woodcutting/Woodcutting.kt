@@ -1,5 +1,6 @@
 package content.skill.woodcutting
 
+import content.skill.summoning.familiarBoost
 import net.pearx.kasechange.toLowerSpaceCase
 import world.gregs.voidps.engine.Script
 import world.gregs.voidps.engine.client.message
@@ -14,11 +15,9 @@ import world.gregs.voidps.engine.data.definition.Tables
 import world.gregs.voidps.engine.entity.character.areaSound
 import world.gregs.voidps.engine.entity.character.mode.interact.PlayerOnObjectInteract
 import world.gregs.voidps.engine.entity.character.player.Player
-import world.gregs.voidps.engine.entity.character.player.Players
 import world.gregs.voidps.engine.entity.character.player.chat.inventoryFull
 import world.gregs.voidps.engine.entity.character.player.skill.Skill
 import world.gregs.voidps.engine.entity.character.player.skill.exp.exp
-import world.gregs.voidps.engine.entity.character.player.skill.level.Interpolation
 import world.gregs.voidps.engine.entity.character.player.skill.level.Level
 import world.gregs.voidps.engine.entity.character.player.skill.level.Level.has
 import world.gregs.voidps.engine.entity.item.Item
@@ -26,6 +25,7 @@ import world.gregs.voidps.engine.entity.item.drop.DropTables
 import world.gregs.voidps.engine.entity.item.floor.FloorItems
 import world.gregs.voidps.engine.entity.obj.GameObject
 import world.gregs.voidps.engine.entity.obj.GameObjects
+import world.gregs.voidps.engine.entity.obj.ResourceRespawn
 import world.gregs.voidps.engine.inv.add
 import world.gregs.voidps.engine.inv.equipment
 import world.gregs.voidps.engine.inv.inventory
@@ -34,9 +34,6 @@ import world.gregs.voidps.engine.suspend.awaitDialogues
 import world.gregs.voidps.type.random
 
 class Woodcutting(val drops: DropTables) : Script {
-
-    val minPlayers = 0
-    val maxPlayers = 2000
 
     init {
         objectOperate("Chop", handler = ::chopDown)
@@ -87,7 +84,7 @@ class Woodcutting(val drops: DropTables) : Script {
             if (!GameObjects.contains(target)) {
                 break
             }
-            if (success(player.levels.get(Skill.Woodcutting), hatchet, log)) {
+            if (success(player.levels.get(Skill.Woodcutting) + player.familiarBoost(Skill.Woodcutting), hatchet, log)) {
                 val xp = log.int("xp") / 10.0
                 player.exp(Skill.Woodcutting, xp)
                 tryDropNest(player, ivy)
@@ -178,12 +175,9 @@ class Woodcutting(val drops: DropTables) : Script {
      * Returns regrow delay based on the type of tree and number of players online
      */
     fun getRegrowTickDelay(log: RowDefinition): Int {
-        val delay = log.intRange("respawn_delay")
-        val level = log.int("level")
-        return if (level == 1) {
-            random.nextInt(delay.first, delay.last) // Regular tree's
-        } else {
-            Interpolation.interpolate(Players.size, delay.last, delay.first, minPlayers, maxPlayers)
+        if (log.rowId == "logs") {
+            return random.nextInt(50, 101) // Regular trees are always 50-100 ticks regardless of players
         }
+        return ResourceRespawn.ticks(log.int("respawn_delay"))
     }
 }

@@ -1,5 +1,7 @@
 package content.area.kandarin.ourania
 
+import content.entity.player.bank.pin.openBank
+import content.entity.player.bank.pin.openCollection
 import content.entity.player.dialogue.*
 import content.entity.player.dialogue.type.*
 import content.social.trade.lend.Loan.getSecondsRemaining
@@ -9,8 +11,8 @@ import world.gregs.voidps.engine.client.ui.open
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.inv.inventory
 import world.gregs.voidps.engine.inv.remove
-import world.gregs.voidps.engine.queue.queue
-import world.gregs.voidps.engine.suspend.StringSuspension
+import world.gregs.voidps.engine.suspend.Suspension
+import world.gregs.voidps.engine.suspend.pauseString
 
 class Eniola : Script {
 
@@ -83,11 +85,11 @@ class Eniola : Script {
         }
 
         npcOperate("Bank", "eniola") {
-            openBank()
+            payToOpenBank()
         }
 
         npcOperate("Collect", "eniola") {
-            openCollection()
+            payToOpenCollection()
         }
 
         interfaceOpened("ourania_bank_charge") { id ->
@@ -98,53 +100,51 @@ class Eniola : Script {
         }
 
         continueDialogue("ourania_bank_charge:*_rune") {
-            (dialogueSuspension as? StringSuspension)?.resume(it.substringAfter(":"))
+            (suspension as? Suspension.StringEntry)?.resume(it.substringAfter(":"))
         }
 
         interfaceOption(id = "ourania_bank_charge:*_rune") {
             if (inventory.remove(it.component, 20)) {
-                val id = get("ourania_interface", "bank")
-                open(id)
+                openBank()
             } else {
-                queue("not_enough_runes") {
-                    npc<Sad>("I'm afraid you don't have the necessary runes with you at this time, so I can't allow you to access your account. Please bring twenty runes of one type and you can open your account.")
-                }
+                npc<Sad>("I'm afraid you don't have the necessary runes with you at this time, so I can't allow you to access your account. Please bring twenty runes of one type and you can open your account.")
             }
         }
     }
 
     fun ChoiceOption.accessBank() {
         option("I'd like to access my bank account, please.") {
-            openBank()
+            payToOpenBank()
         }
     }
 
     fun ChoiceOption.collectionBox() {
         option("I'd like to see my collection box.") {
-            openCollection()
+            payToOpenCollection()
         }
     }
 
     fun ChoiceOption.pinSettings() {
         option("I'd like to check my PIN settings.") {
+            open("bank_pin_settings")
         }
     }
 
-    suspend fun Player.openCollection() {
+    suspend fun Player.payToOpenCollection() {
         if (runePayment()) {
-            open("collection_box")
+            openCollection()
         }
     }
 
-    suspend fun Player.openBank() {
+    suspend fun Player.payToOpenBank() {
         if (runePayment()) {
-            open("bank")
+            openBank()
         }
     }
 
     suspend fun Player.runePayment(): Boolean {
         open("ourania_bank_charge")
-        val rune = StringSuspension.get(this)
+        val rune = pauseString()
         close("ourania_bank_charge")
 
         if (!inventory.remove(rune, 20)) {

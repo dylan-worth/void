@@ -9,6 +9,7 @@ import content.skill.magic.spell.spell
 import content.skill.melee.weapon.Weapon
 import content.skill.melee.weapon.weapon
 import content.skill.prayer.Prayer
+import content.skill.summoning.familiarDefenceMultiplier
 import world.gregs.voidps.engine.client.message
 import world.gregs.voidps.engine.entity.character.Character
 import world.gregs.voidps.engine.entity.character.mode.combat.CombatApi
@@ -18,6 +19,7 @@ import world.gregs.voidps.engine.entity.character.npc.NPC
 import world.gregs.voidps.engine.entity.character.player.Player
 import world.gregs.voidps.engine.entity.character.player.skill.Skill
 import world.gregs.voidps.engine.entity.item.Item
+import world.gregs.voidps.engine.queue.queue
 import world.gregs.voidps.engine.queue.strongQueue
 import world.gregs.voidps.engine.timer.CLIENT_TICKS
 import world.gregs.voidps.type.random
@@ -98,6 +100,9 @@ object Hit {
         if (offense) {
             rating = Bonus.slayerModifier(source, target, type, rating, damage = false)
             rating = Weapon.specialRatingModifiers(source, type, weapon, special, rating)
+        } else if (target is Player) {
+            // Iron/steel titan and wolpertinger passives make their owner harder to hit.
+            rating = (rating * target.familiarDefenceMultiplier(type, meleeType(type))).toInt()
         }
         if (source["debug", false]) {
             val message = "${if (offense) "Offensive" else "Defensive"} rating: $rating ($type)"
@@ -142,7 +147,7 @@ object Hit {
  * @param offensiveType attack type used for calculating offensive rating and damage
  * @param defensiveType attack type used for rolling the [target]s defensive rating
  * @param delay Hit delay in client ticks
- * @param spell The type of maigc spell used
+ * @param spell The type of magic spell used
  * @param special Special attack
  * @param damage The amount of damage dealt
  * @return The actual amount damage dealt after bonuses and protections applied
@@ -164,8 +169,14 @@ fun Character.hit(
     } else if (this is NPC) {
         CombatApi.attack(this, CombatAttack(target, actualDamage, offensiveType, weapon, spell, special, delay))
     }
-    target.strongQueue("hit", if (delay == 0) 0 else CLIENT_TICKS.toTicks(delay) + 1) {
-        target.directHit(this@hit, actualDamage, offensiveType, weapon, spell, special)
+    if (target is NPC) {
+        target.queue("hit", if (delay == 0) 0 else CLIENT_TICKS.toTicks(delay) + 1) {
+            target.directHit(this@hit, actualDamage, offensiveType, weapon, spell, special)
+        }
+    } else if (target is Player) {
+        target.strongQueue("hit", if (delay == 0) 0 else CLIENT_TICKS.toTicks(delay) + 1) {
+            target.directHit(this@hit, actualDamage, offensiveType, weapon, spell, special)
+        }
     }
     return actualDamage
 }

@@ -227,6 +227,7 @@ def = 8
 combat_def = "farmer"
 attack_bonus = 5
 respawn_delay = 25
+drop_table = "farmer_members"
 examine = "He grows the crops in this area."
 
 [farmer_lumbridge_2]
@@ -273,14 +274,11 @@ examine = "Perhaps this gardener might look after your crops for you."
 [farmer_lumbridge_3]
 id = 1758
 examine = "He grows the crops in this area."
+clone = "farmer_lumbridge"
 
 [sigmund_lumbridge]
 id = 2079
 examine = "He grows the crops in this area."
-
-[xenia]
-id = 9633
-examine = "An old adventurer."
 
 [dwarf_lumbridge_2]
 id = 4316
@@ -291,14 +289,6 @@ id = 4320
 [nastroth_lumbridge_2]
 id = 6540
 examine = "A collector of ancient artefacts."
-
-[xenia_2]
-id = 11476
-examine = "An old adventurer."
-
-[xenia_3]
-id = 9634
-examine = "An old adventurer."
 
 [chief_thief_robin_lumbridge_2]
 id = 7955

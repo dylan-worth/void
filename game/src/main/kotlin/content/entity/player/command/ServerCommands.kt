@@ -14,6 +14,7 @@ import world.gregs.voidps.engine.client.command.stringArg
 import world.gregs.voidps.engine.client.message
 import world.gregs.voidps.engine.client.ui.menu
 import world.gregs.voidps.engine.client.ui.open
+import world.gregs.voidps.engine.data.AccountDefinitionsReloader
 import world.gregs.voidps.engine.data.Settings
 import world.gregs.voidps.engine.data.SettingsReload
 import world.gregs.voidps.engine.data.configFiles
@@ -35,7 +36,6 @@ import world.gregs.voidps.engine.data.definition.PrayerDefinitions
 import world.gregs.voidps.engine.data.definition.QuestDefinitions
 import world.gregs.voidps.engine.data.definition.RenderEmoteDefinitions
 import world.gregs.voidps.engine.data.definition.SoundDefinitions
-import world.gregs.voidps.engine.data.definition.SpellDefinitions
 import world.gregs.voidps.engine.data.definition.Tables
 import world.gregs.voidps.engine.data.definition.VariableDefinitions
 import world.gregs.voidps.engine.entity.World
@@ -57,7 +57,7 @@ import kotlin.text.isBlank
 import kotlin.text.split
 import kotlin.text.toIntOrNull
 
-class ServerCommands(val accountLoader: PlayerAccountLoader) : Script {
+class ServerCommands(val accountLoader: PlayerAccountLoader, val accountReloader: AccountDefinitionsReloader) : Script {
 
     init {
         adminCommand(
@@ -68,7 +68,7 @@ class ServerCommands(val accountLoader: PlayerAccountLoader) : Script {
         )
         val configs = setOf(
             "books", "teleports", "music_tracks", "fairy_rings", "ships", "objects", "items", "bots", "npcs", "areas", "emotes", "anims", "containers", "graphics",
-            "item_on_item", "sounds", "quests", "midis", "variables", "music", "interfaces", "spells", "patrols", "prayers", "drops", "client_scripts", "settings",
+            "item_on_item", "sounds", "quests", "midis", "variables", "music", "interfaces", "spells", "patrols", "prayers", "drops", "client_scripts", "settings", "accounts",
         )
         adminCommand(
             "reload",
@@ -112,11 +112,11 @@ class ServerCommands(val accountLoader: PlayerAccountLoader) : Script {
             }
             "areas" -> Areas.load(files.list(Settings["map.areas"]))
             "emotes", "render_anims", "render_emotes" -> get<RenderEmoteDefinitions>().load(files.find(Settings["definitions.renderEmotes"]))
-            "anim_defs", "anims", "animations" -> get<AnimationDefinitions>().load(files.list(Settings["definitions.animations"]))
+            "anim_defs", "anims", "animations" -> AnimationDefinitions.load(files.list(Settings["definitions.animations"]))
             "container_defs", "containers", "inventory_defs", "inventories", "inv_defs", "invs", "shop", "shops" -> {
                 get<InventoryDefinitions>().load(files.list(Settings["definitions.inventories"]), files.list(Settings["definitions.shops"]))
             }
-            "graphic_defs", "graphics", "gfx", "gfxs" -> get<GraphicDefinitions>().load(files.list(Settings["definitions.graphics"]))
+            "graphic_defs", "graphics", "gfx", "gfxs" -> GraphicDefinitions.load(files.list(Settings["definitions.graphics"]))
             "item_on_item", "item-on-item", "ioi", "recipes" -> get<ItemOnItemDefinitions>().load(files.list(Settings["definitions.itemOnItem"]))
             "sound", "sounds", "sound effects" -> get<SoundDefinitions>().load(files.list(Settings["definitions.sounds"]))
             "produce", "farming" -> get<FarmingDefinitions>().load(files.find(Settings["definitions.produce"]))
@@ -131,7 +131,6 @@ class ServerCommands(val accountLoader: PlayerAccountLoader) : Script {
                 }
                 InterfaceDefinitions.load(files.list(Settings["definitions.interfaces"]), files.find(Settings["definitions.interfaces.types"]))
             }
-            "spells" -> get<SpellDefinitions>().load(files.find(Settings["definitions.spells"]))
             "patrols", "paths" -> get<PatrolDefinitions>().load(files.list(Settings["definitions.patrols"]))
             "prayers" -> get<PrayerDefinitions>().load(files.find(Settings["definitions.prayers"]))
             "drops", "drop_tables" -> get<DropTables>().load(files.list(Settings["spawns.drops"]))
@@ -140,8 +139,13 @@ class ServerCommands(val accountLoader: PlayerAccountLoader) : Script {
                 Settings.load()
                 SettingsReload.now()
             }
+            "accounts", "account", "passwords" -> {
+                if (!accountReloader.reload { count -> player.message("Reloaded $count account definitions.", ChatType.Console) }) {
+                    player.message("Account reload already in progress.", ChatType.Console)
+                }
+            }
             "bots" -> get<BotManager>().load(files)
-            "tables", "rows", "dbs" -> Tables.load(files.list(Settings["definitions.tables"]))
+            "tables", "rows", "dbs", "spells" -> Tables.load(files.list(Settings["definitions.tables"]))
         }
     }
 

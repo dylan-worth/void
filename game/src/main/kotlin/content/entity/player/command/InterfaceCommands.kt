@@ -29,8 +29,9 @@ import world.gregs.voidps.engine.queue.queue
 import world.gregs.voidps.network.login.protocol.encode.*
 import kotlin.collections.iterator
 
+private const val MAX_EXPR_SCAN_RANGE = 1024
+
 class InterfaceCommands(
-    val animationDefinitions: AnimationDefinitions,
     val inventoryDefinitions: InventoryDefinitions,
     scriptDefinitions: ClientScriptDefinitions,
 ) : Script {
@@ -40,6 +41,10 @@ class InterfaceCommands(
         commandAlias("inter", "iface")
         adminCommand("show", stringArg("interface-id", autofill = InterfaceDefinitions.ids.keys), stringArg("component-id", autofill = InterfaceDefinitions.componentIds.keys), boolArg("visible"), desc = "Toggle visibility of an interface component") { args ->
             client?.interfaceVisibility(InterfaceDefinition.pack(args[0].toInt(), args[1].toInt()), !args[2].toBoolean())
+        }
+
+        adminCommand("set_pos", stringArg("interface-id", autofill = InterfaceDefinitions.ids.keys), stringArg("component-id", autofill = InterfaceDefinitions.componentIds.keys), intArg("x"), intArg("y"), desc = "Set position of an interface component") { args ->
+            client?.interfacePosition(InterfaceDefinition.pack(args[0].toInt(), args[1].toInt()), args[2].toInt(), args[3].toInt())
         }
 
         adminCommand("colour", stringArg("iface-id", autofill = InterfaceDefinitions.ids.keys), stringArg("comp-id", autofill = InterfaceDefinitions.componentIds.keys), intArg("red"), intArg("green"), intArg("blue"), desc = "Set colour of an interface component") { args ->
@@ -77,10 +82,20 @@ class InterfaceCommands(
 
         adminCommand(
             "expr",
-            stringArg("expression-id", autofill = { animationDefinitions.definitions.filter { it.stringId.startsWith("expression_") }.map { it.stringId.removePrefix("expression_") }.toSet() }),
+            stringArg("expression-id", autofill = { AnimationDefinitions.definitions.filter { it.stringId.startsWith("expression_") }.map { it.stringId.removePrefix("expression_") }.toSet() }),
             stringArg("npc-id", autofill = { NPCDefinitions.ids.keys }, optional = true),
             desc = "Display dialogue head with an animation expression",
             handler = ::expression,
+        )
+
+        adminCommand(
+            "expr_scan",
+            intArg("npc-id"),
+            intArg("start-anim"),
+            intArg("end-anim"),
+            intArg("tick-delay", optional = true),
+            desc = "Cycle dialogue chathead anims across a range; the title shows the current anim id, auto-advances every N ticks (default 3, ~1.8s).",
+            handler = ::scanExpressions,
         )
 
         adminCommand("shop", stringArg("shop-id", autofill = { inventoryDefinitions.definitions.filter { it["shop", false] }.map { it.stringId }.toSet() }), desc = "Open a shop by id") { args ->
@@ -126,6 +141,51 @@ class InterfaceCommands(
             player.sendScript(id = args[0], *remainder.toTypedArray())
         } else {
             player.sendScript(id, remainder)
+        }
+    }
+
+    fun scanExpressions(player: Player, args: List<String>) {
+        val npcId = args[0].toIntOrNull()
+        val start = args[1].toIntOrNull()
+        val end = args[2].toIntOrNull()
+        if (npcId == null || start == null || end == null) {
+            player.message("expr_scan: npc-id / start-anim / end-anim must all be integers")
+            return
+        }
+        val tickDelay = args.getOrNull(3)?.toIntOrNull()?.coerceAtLeast(1) ?: 3
+        if (start > end) {
+            player.message("expr_scan: start ($start) must be <= end ($end)")
+            return
+        }
+        if (end - start > MAX_EXPR_SCAN_RANGE) {
+            player.message("expr_scan: range ${end - start} exceeds $MAX_EXPR_SCAN_RANGE")
+            return
+        }
+        player.queue("expr_scan") {
+            if (!open("dialogue_npc_chat1")) {
+                message("expr_scan: could not open dialogue_npc_chat1")
+                return@queue
+            }
+            // Send the head model once — keeping it stable while we iterate
+            // anims avoids re-firing the npcDialogueHead packet (which caused
+            // client crashes when combined with the continue-button suspend
+            // pattern).
+            client?.npcDialogueHead(InterfaceDefinition.pack(241, 2), npcId)
+            try {
+                for (anim in start..end) {
+                    if (!interfaces.contains("dialogue_npc_chat1")) {
+                        message("expr_scan: dialogue closed early at anim $anim")
+                        return@queue
+                    }
+                    interfaces.sendAnimation("dialogue_npc_chat1", "head", anim)
+                    interfaces.sendText("dialogue_npc_chat1", "title", "anim $anim")
+                    interfaces.sendLines("dialogue_npc_chat1", listOf("Anim $anim of $start..$end (auto-advancing)."))
+                    delay(tickDelay)
+                }
+                message("expr_scan: complete.")
+            } finally {
+                interfaces.close("dialogue_npc_chat1")
+            }
         }
     }
 
